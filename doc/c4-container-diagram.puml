@@ -1,0 +1,24 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container diagram for PayHub
+
+Person(customer, "Customer", "Submits orders")
+
+System_Boundary(payhub, "PayHub") {
+    Container(order_service, "Order Service", "Spring Boot", "Handles order creation, publishes events")
+    Container(payment_service, "Payment Service", "Spring Boot", "Consumes events, processes payments")
+    ContainerDb(kafka, "Kafka", "Message Broker", "order-events topic")
+    ContainerDb(redis, "Redis", "Cache / Lock", "Caches product info, distributed locks")
+    ContainerDb(postgres, "PostgreSQL", "Database", "Stores orders, payments, audit logs")
+    System_Ext(payment_gateway, "Payment Gateway", "External API for payment processing")
+}
+
+Rel(customer, order_service, "POST /api/orders")
+Rel(order_service, kafka, "Produces to order-events")
+Rel(kafka, payment_service, "Consumes from order-events")
+Rel(payment_service, redis, "Reads/Writes")
+Rel(payment_service, postgres, "Reads/Writes")
+Rel(payment_service, payment_gateway, "Calls to process payment")
+
+@enduml

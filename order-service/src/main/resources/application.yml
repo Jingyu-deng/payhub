@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  kafka:
+    admin:
+        auto-create-topics: true
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payhub
+    username: payhub
+    password: payhub123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update   # for development only
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
