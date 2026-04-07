@@ -1,5 +1,6 @@
 package com.payhub.payment.consumer;
 
+import com.payhub.common.event.OrderCancelledEvent;
 import com.payhub.common.event.OrderCreatedEvent;
 import com.payhub.payment.entity.Payment;
 import com.payhub.payment.repository.PaymentRepository;
@@ -7,6 +8,8 @@ import com.payhub.payment.service.IdempotencyService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +20,13 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@KafkaListener(topics = "order-events", groupId = "payment-group")
 public class OrderConsumer {
 
     private final PaymentRepository paymentRepository;
     private final IdempotencyService idempotencyService;
 
-    @KafkaListener(topics = "order-events", groupId = "payment-group")
+    @KafkaHandler
     @Transactional
     public void handleOrderCreated(OrderCreatedEvent event) {
         String orderId = event.getOrderId();
@@ -49,5 +53,11 @@ public class OrderConsumer {
         // Mark as processed
         idempotencyService.markAsProcessed(orderId);
         log.info("Payment recorded for order: {}", orderId);
+    }
+
+    @KafkaHandler
+    public void handleOrderCancelled(OrderCancelledEvent event) {
+        log.info("Order cancelled: {}", event);
+        // Example: release any pending payment authorizations, update status
     }
 }

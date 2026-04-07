@@ -1,5 +1,6 @@
 package com.payhub.order.service;
 
+import com.payhub.common.event.OrderCancelledEvent;
 import com.payhub.common.event.OrderCreatedEvent;
 import com.payhub.order.dto.OrderRequest;
 import com.payhub.order.entity.Order;
@@ -18,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final OrderRepository orderRepository;
 
     private static final String TOPIC = "order-events";
@@ -53,5 +54,22 @@ public class OrderService {
         log.info("Order event sent: {}", event);
 
         return orderId;
+    }
+
+    @Transactional
+    public void cancelOrder(String orderId, String reason, String cancelledBy) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+
+        if (!"PENDING".equals(order.getStatus())) {
+            throw new RuntimeException("Order cannot be cancelled, current status: " + order.getStatus());
+        }
+
+        order.setStatus("CANCELLED");
+        orderRepository.save(order);
+
+        OrderCancelledEvent event = new OrderCancelledEvent(orderId, reason, cancelledBy, System.currentTimeMillis());
+        kafkaTemplate.send(TOPIC, orderId, event);
+        log.info("Order cancelled event sent: {}", event);
     }
 }
