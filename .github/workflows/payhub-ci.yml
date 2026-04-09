@@ -60,6 +60,9 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Check code formatting with Spotless
+      run: ./gradlew spotlessCheck
+
     - name: Build and Test Order Service
       run: ./gradlew :order-service:build
 

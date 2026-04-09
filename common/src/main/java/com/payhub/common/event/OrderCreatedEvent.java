@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderCreatedEvent {
-    private String orderId;
-    private String productId;
-    private Integer quantity;
-    private String userId;
-    private Long timestamp;
+  private String orderId;
+  private String productId;
+  private Integer quantity;
+  private String userId;
+  private Long timestamp;
 }
