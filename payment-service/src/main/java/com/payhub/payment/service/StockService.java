@@ -26,7 +26,7 @@ public class StockService {
     String lockKey = "lock:stock:" + productId;
     RLock lock = redissonClient.getLock(lockKey);
     try {
-      if (lock.tryLock(5, 10, TimeUnit.SECONDS)) {
+      if (lock.tryLock(5, TimeUnit.SECONDS)) {
         try {
           Integer current = stock.getOrDefault(productId, 0);
           if (current >= quantity) {
