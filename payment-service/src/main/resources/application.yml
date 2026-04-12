@@ -31,3 +31,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+redisson:
+  config: |
+    singleServerConfig:
+      address: "redis://localhost:6379"

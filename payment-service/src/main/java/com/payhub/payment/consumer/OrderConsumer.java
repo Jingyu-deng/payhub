@@ -6,6 +6,7 @@ import com.payhub.common.exception.PaymentProcessingException;
 import com.payhub.payment.entity.Payment;
 import com.payhub.payment.repository.PaymentRepository;
 import com.payhub.payment.service.IdempotencyService;
+import com.payhub.payment.service.StockService;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class OrderConsumer {
 
   private final PaymentRepository paymentRepository;
   private final IdempotencyService idempotencyService;
+  private final StockService stockService;
 
   @KafkaHandler
   @Transactional
@@ -35,12 +37,14 @@ public class OrderConsumer {
       return;
     }
 
-    // Example: reject orders with quantity > 100
-    if (event.getQuantity() > 100) {
-      throw new PaymentProcessingException("Order quantity exceeds limit: " + event.getQuantity());
+    // Deduct stock with distributed lock
+    boolean deducted = stockService.deductStock(event.getProductId(), event.getQuantity());
+    if (!deducted) {
+      throw new PaymentProcessingException(
+          String.format(
+              "Insufficient stock for product %s (requested: %d)",
+              event.getProductId(), event.getQuantity()));
     }
-
-    log.info("Processing order event: {}", event);
 
     // Simulate payment processing (always success)
     Payment payment = new Payment();
