@@ -3,11 +3,15 @@ package com.payhub.payment.consumer;
 import com.payhub.common.event.OrderCancelledEvent;
 import com.payhub.common.event.OrderCreatedEvent;
 import com.payhub.common.exception.PaymentProcessingException;
+import com.payhub.common.payment.PaymentGateway;
+import com.payhub.common.payment.PaymentResult;
 import com.payhub.payment.entity.Payment;
 import com.payhub.payment.repository.PaymentRepository;
 import com.payhub.payment.service.IdempotencyService;
+import com.payhub.payment.service.PaymentRouter;
 import com.payhub.payment.service.StockService;
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +33,7 @@ public class OrderConsumer {
   private final IdempotencyService idempotencyService;
   private final StockService stockService;
   private final RedissonClient redissonClient; // for idempotency lock
+  private final PaymentRouter paymentRouter;
 
   @KafkaHandler
   @Transactional
@@ -59,19 +64,28 @@ public class OrderConsumer {
                 event.getProductId(), event.getQuantity()));
       }
 
-      // Simulate payment processing (always success)
+      // Route to payment gateway
+      PaymentGateway gateway = paymentRouter.route(event.getUserId(), event.getProductId());
+      BigDecimal amount = BigDecimal.valueOf(10.00 * event.getQuantity());
+      PaymentResult result = gateway.processPayment(orderId, amount, "CNY", Map.of());
+
+      if (!result.isSuccess()) {
+        throw new PaymentProcessingException("Payment failed: " + result.getMessage());
+      }
+
+      // Save payment
       Payment payment = new Payment();
       payment.setId(UUID.randomUUID().toString());
       payment.setOrderId(orderId);
-      BigDecimal amount = BigDecimal.valueOf(10.00 * event.getQuantity());
       payment.setAmount(amount);
       payment.setStatus("SUCCESS");
-      payment.setPaymentMethod("MOCK");
+      payment.setPaymentMethod(gateway.getGatewayName());
+      payment.setTransactionId(result.getTransactionId());
       paymentRepository.save(payment);
 
       // Mark as processed (idempotency)
       idempotencyService.markAsProcessed(orderId);
-      log.info("Payment recorded for order: {}", orderId);
+      log.info("Payment recorded for order: {} via {}", orderId, gateway.getGatewayName());
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

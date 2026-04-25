@@ -25,6 +25,9 @@ public class Payment {
   @Column(name = "payment_method")
   private String paymentMethod;
 
+  @Column(name = "transaction_id")
+  private String transactionId;
+
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)
   private Instant createdAt;

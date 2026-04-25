@@ -1,5 +1,7 @@
 dependencies {
     implementation project(':common')
+    implementation project(':wechat-pay-adapter')
+    implementation project(':alipay-adapter')
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
