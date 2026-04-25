@@ -13,6 +13,7 @@ PayHub is a production‑grade microservices system that processes orders and pa
 - **Event‑driven architecture** with Apache Kafka
 - **Reliable messaging** (acks=all, idempotency, dead‑letter queue)
 - **Distributed locking** and idempotency with Redis
+- **SPI‑based pluggable payment gateways** (WeChat Pay, Alipay)
 - **Persistent storage** using PostgreSQL and JPA
 - **Full containerisation** with Docker Compose
 - **Production‑ready configuration** for real‑world deployment
@@ -24,7 +25,7 @@ This project is designed as a portfolio piece for senior/architect roles, showca
 | Component          | Technology                                   |
 |--------------------|----------------------------------------------|
 | Language           | Java 21                                      |
-| Framework          | Spring Boot 3.2.4, Spring Data JPA          |
+| Framework          | Spring Boot 3.3.4, Spring Data JPA          |
 | Message Broker     | Apache Kafka (with Kafdrop UI)              |
 | Cache / Lock       | Redis (Redisson for distributed locks)      |
 | Database           | PostgreSQL 15                                |
@@ -39,10 +40,19 @@ This project is designed as a portfolio piece for senior/architect roles, showca
 
 The system consists of:
 - **Order Service** – REST API to create orders, persists order, publishes `OrderCreatedEvent` to Kafka.
-- **Payment Service** – consumes `OrderCreatedEvent`, processes payment (mock), records payment in DB.
+- **Payment Service** – consumes `OrderCreatedEvent`, uses SPI‑discovered payment gateways, records payment in DB.
 - **Kafka** – asynchronous event bus.
 - **Redis** – idempotency store and distributed lock manager.
 - **PostgreSQL** – stores orders, payments, audit logs.
+
+## Payment Gateway SPI
+
+PayHub uses **Java SPI (Service Provider Interface)** to dynamically discover payment gateway implementations. Currently supported:
+
+- **WeChat Pay** – `wechat-pay-adapter` module
+- **Alipay** – `alipay-adapter` module
+
+Adding a new gateway requires a new module implementing `PaymentGateway` and providing a `META-INF/services/com.payhub.common.payment.PaymentGateway` file.
 
 ## Quick Start
 
@@ -104,10 +114,11 @@ You can run them from your IDE (run the main classes) or via Gradle:
 | Kafka producer / consumer | ✅ Done |
 | JPA + PostgreSQL persistence | ✅ Done |
 | Manual offset commit | ✅ Done |
-| Redis idempotency (duplicate prevention) | 🔄 In progress |
-| Distributed locks (Redisson) | ⏳ Planned |
-| Kafka reliability (acks=all, idempotence) | ⏳ Planned |
-| Dead‑letter queue (DLQ) | ⏳ Planned |
+| Redis idempotency (duplicate prevention) | ✅ Done |
+| Distributed locks (Redisson) | ✅ Done |
+| Kafka reliability (acks=all, idempotence) | ✅ Done |
+| Dead‑letter queue (DLQ) | ✅ Done |
+| SPI payment gateways (WeChat, Alipay) | ✅ Done |
 | Unit / integration tests | ⏳ Planned |
 | Prometheus + Grafana | ⏳ Planned |
 | Kubernetes deployment (Minikube) | ⏳ Planned |
@@ -115,16 +126,18 @@ You can run them from your IDE (run the main classes) or via Gradle:
 
 ## Architecture Decisions (ADRs)
 
-- [ADR‑001](docs/adr/001-message-queue.md) – Why Kafka instead of RabbitMQ or RocketMQ.
-- ADR‑002 (planned) – Distributed lock strategy (Redisson vs RedisTemplate).
-- ADR‑003 (planned) – Kafka partition count and consumer concurrency.
+- [ADR‑001](docs/adr/001-message-queue.md) – Message queue selection (Kafka vs RabbitMQ vs RocketMQ)
+- [ADR‑002](docs/adr/002-distributed-lock.md) – Distributed lock strategy (Redisson vs RedisTemplate)
+- [ADR‑003](docs/adr/003-payment-gateway-abstraction.md) – SPI for payment gateway pluggability
 
 ## Project Structure
 
     payhub/
-    ├── common/                     – shared DTOs, events
+    ├── common/                     – SDK, events, DTOs
     ├── order-service/              – order creation, Kafka producer
-    ├── payment-service/            – payment consumer, JPA
+    ├── payment-service/            – payment consumer, JPA, SPI router
+    ├── wechat-pay-adapter/         – WeChat Pay implementation
+    ├── alipay-adapter/             – Alipay implementation
     ├── docker-compose.yml          – all infrastructure services
     ├── init-scripts/               – PostgreSQL schema init
     ├── build.gradle                – root Gradle build
