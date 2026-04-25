@@ -1,2 +1,6 @@
 rootProject.name = 'payhub'
-include 'common', 'payment-service', 'wechat-pay-adapter', 'alipay-adapter'
+include 'common'
+include 'order-service'
+include 'payment-service'
+include 'wechat-pay-adapter'
+include 'alipay-adapter'
