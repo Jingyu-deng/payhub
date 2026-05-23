@@ -1,5 +1,6 @@
 package com.payhub.payment.config;
 
+import com.payhub.common.exception.PaymentProcessingException;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,9 @@ public class KafkaConsumerConfig {
     // Retry 3 times with 1 second interval, then send to DLQ
     DefaultErrorHandler errorHandler =
         new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3));
+
+    // Business logic failures are non-transient — do not retry
+    errorHandler.addNotRetryableExceptions(PaymentProcessingException.class);
 
     factory.setCommonErrorHandler(errorHandler);
 

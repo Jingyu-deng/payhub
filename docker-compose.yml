@@ -60,5 +60,46 @@ services:
       timeout: 5s
       retries: 5
       
+  # === Observability Stack ===
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    container_name: payhub-jaeger
+    ports:
+      - "4318:4318"     # OTLP HTTP (apps send traces here)
+      - "16686:16686"   # Jaeger UI
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: payhub-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: payhub-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+
 volumes:
   postgres-data:
+  grafana-data:
+

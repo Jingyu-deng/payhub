@@ -2,8 +2,12 @@ server:
   port: 8081
 
 spring:
+  application:
+    name: payment-service
   kafka:
     bootstrap-servers: localhost:9092
+    listener:
+      observation-enabled: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -36,3 +40,23 @@ redisson:
   config: |
     singleServerConfig:
       address: "redis://localhost:6379"
+
+# Management & Observability
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        kafka.consumer.fetch.manager.records.lag: true
+  tracing:
+    sampling:
+      probability: 0.1
+  otlp:
+    tracing:
+      endpoint: "${OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}"

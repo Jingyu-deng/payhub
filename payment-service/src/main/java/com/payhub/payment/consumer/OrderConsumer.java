@@ -10,6 +10,8 @@ import com.payhub.payment.repository.PaymentRepository;
 import com.payhub.payment.service.IdempotencyService;
 import com.payhub.payment.service.PaymentRouter;
 import com.payhub.payment.service.StockService;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
@@ -32,12 +34,16 @@ public class OrderConsumer {
   private final PaymentRepository paymentRepository;
   private final IdempotencyService idempotencyService;
   private final StockService stockService;
-  private final RedissonClient redissonClient; // for idempotency lock
+  private final RedissonClient redissonClient;
   private final PaymentRouter paymentRouter;
+  private final Timer paymentProcessingTimer;
+  private final Counter paymentSuccessCounter;
+  private final Counter paymentFailureCounter;
 
   @KafkaHandler
   @Transactional
   public void handleOrderCreated(OrderCreatedEvent event) {
+    long start = System.nanoTime();
     String orderId = event.getOrderId();
     String idempotencyLockKey = "lock:idempotency:" + orderId;
     RLock idempotencyLock = redissonClient.getLock(idempotencyLockKey);
@@ -58,6 +64,7 @@ public class OrderConsumer {
       // Deduct stock (stock service has its own distributed lock on productId)
       boolean deducted = stockService.deductStock(event.getProductId(), event.getQuantity());
       if (!deducted) {
+        paymentFailureCounter.increment();
         throw new PaymentProcessingException(
             String.format(
                 "Insufficient stock for product %s (requested: %d)",
@@ -70,6 +77,7 @@ public class OrderConsumer {
       PaymentResult result = gateway.processPayment(orderId, amount, "CNY", Map.of());
 
       if (!result.isSuccess()) {
+        paymentFailureCounter.increment();
         throw new PaymentProcessingException("Payment failed: " + result.getMessage());
       }
 
@@ -85,6 +93,7 @@ public class OrderConsumer {
 
       // Mark as processed (idempotency)
       idempotencyService.markAsProcessed(orderId);
+      paymentSuccessCounter.increment();
       log.info("Payment recorded for order: {} via {}", orderId, gateway.getGatewayName());
 
     } catch (InterruptedException e) {
@@ -94,6 +103,7 @@ public class OrderConsumer {
       if (idempotencyLock.isHeldByCurrentThread()) {
         idempotencyLock.unlock();
       }
+      paymentProcessingTimer.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
     }
   }
 

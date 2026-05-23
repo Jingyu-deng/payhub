@@ -2,10 +2,14 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: order-service
   kafka:
     admin:
         auto-create-topics: true
     bootstrap-servers: localhost:9092
+    template:
+      observation-enabled: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -25,3 +29,22 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# Management & Observability
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  tracing:
+    sampling:
+      probability: 0.1
+  otlp:
+    tracing:
+      endpoint: "${OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}"

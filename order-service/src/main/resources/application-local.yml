@@ -1,0 +1,15 @@
+# Local development profile.
+# Activate with: SPRING_PROFILES_ACTIVE=local
+# Traces go to Jaeger via OTLP, metrics via Prometheus scraping.
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,conditions
+  tracing:
+    sampling:
+      probability: 1.0       # trace every request for local debugging
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces

@@ -31,7 +31,8 @@ This project is designed as a portfolio piece for senior/architect roles, showca
 | Database           | PostgreSQL 15                                |
 | Build Tool         | Gradle (multi‑module)                        |
 | Containerisation   | Docker, Docker Compose                       |
-| Observability      | Micrometer, Prometheus, Grafana (planned)   |
+| Observability      | Micrometer, Prometheus, Grafana, Jaeger     |
+| Tracing            | Micrometer Tracing (OTel + OTLP)        |
 | Testing            | JUnit 5, Mockito, Testcontainers            |
 
 ## Architecture
@@ -77,6 +78,9 @@ This starts:
 - **Redis** (port 6379)
 - **PostgreSQL** (port 5432)
 - **Kafdrop** (port 9000) – Kafka UI
+- **Prometheus** (port 9090) – metrics collection
+- **Grafana** (port 3000) – metrics dashboards (admin/admin)
+- **Jaeger** (port 16686) – distributed tracing
 
 ### 3. Run the Spring Boot services
 
@@ -105,6 +109,17 @@ You can run them from your IDE (run the main classes) or via Gradle:
 
 - **Kafdrop UI** – open http://localhost:9000, browse `order-events` topic.
 
+### 6. Observability
+
+- **Prometheus** – open http://localhost:9090, query `http_server_requests_seconds_count`.
+- **Grafana** – open http://localhost:3000 (admin/admin), browse the pre-provisioned "PayHub - Service Overview" dashboard.
+- **Jaeger** – open http://localhost:16686, select a service and click "Find Traces".
+- **Actuator metrics**:
+  - http://localhost:8080/actuator/metrics (Order Service)
+  - http://localhost:8081/actuator/metrics (Payment Service)
+  - http://localhost:8080/actuator/prometheus (Order Service Prometheus endpoint)
+  - http://localhost:8081/actuator/prometheus (Payment Service Prometheus endpoint)
+
 ## Project Status
 
 | Feature | Status |
@@ -120,7 +135,8 @@ You can run them from your IDE (run the main classes) or via Gradle:
 | Dead‑letter queue (DLQ) | ✅ Done |
 | SPI payment gateways (WeChat, Alipay) | ✅ Done |
 | Unit / integration tests | ⏳ Planned |
-| Prometheus + Grafana | ⏳ Planned |
+| Prometheus + Grafana | ✅ Done |
+| Distributed tracing (OTel + Jaeger) | ✅ Done |
 | Kubernetes deployment (Minikube) | ⏳ Planned |
 | Load testing (JMeter) | ⏳ Planned |
 

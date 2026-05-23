@@ -1,0 +1,82 @@
+{
+  "title": "PayHub - Service Overview",
+  "uid": "payhub-overview",
+  "version": 1,
+  "timezone": "browser",
+  "panels": [
+    {
+      "title": "Order Service - HTTP Requests (rate)",
+      "type": "graph",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{application=\"order-service\"}[1m])",
+          "legendFormat": "{{method}} {{uri}}"
+        }
+      ]
+    },
+    {
+      "title": "Payment Service - HTTP Requests (rate)",
+      "type": "graph",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{application=\"payment-service\"}[1m])",
+          "legendFormat": "{{method}} {{uri}}"
+        }
+      ]
+    },
+    {
+      "title": "Order Service - HTTP Response Time (P99)",
+      "type": "graph",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{application=\"order-service\"}[1m]))",
+          "legendFormat": "P99"
+        }
+      ]
+    },
+    {
+      "title": "Payment Service - HTTP Response Time (P99)",
+      "type": "graph",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{application=\"payment-service\"}[1m]))",
+          "legendFormat": "P99"
+        }
+      ]
+    },
+    {
+      "title": "JVM Memory Usage",
+      "type": "graph",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{application=\"order-service\", area=\"heap\"}",
+          "legendFormat": "Order Service (heap)"
+        },
+        {
+          "expr": "jvm_memory_used_bytes{application=\"payment-service\", area=\"heap\"}",
+          "legendFormat": "Payment Service (heap)"
+        }
+      ]
+    },
+    {
+      "title": "Kafka Event Rate (order-events)",
+      "type": "graph",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "rate(kafka_producer_topic_send_total{application=\"order-service\"}[1m])",
+          "legendFormat": "Producer: {{topic}}"
+        },
+        {
+          "expr": "rate(kafka_consumer_fetch_manager_records_consumed_total{application=\"payment-service\"}[1m])",
+          "legendFormat": "Consumer records"
+        }
+      ]
+    }
+  ]
+}
