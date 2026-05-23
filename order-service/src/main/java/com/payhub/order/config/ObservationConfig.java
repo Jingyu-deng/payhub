@@ -11,12 +11,15 @@ public class ObservationConfig {
 
   @Bean
   ObservationRegistryCustomizer<ObservationRegistry> skipActuatorObservations() {
-    return registry -> registry.observationConfig()
-        .observationPredicate((name, context) -> {
-          if (context instanceof ServerRequestObservationContext serverContext) {
-            return !serverContext.getCarrier().getRequestURI().startsWith("/actuator");
-          }
-          return true;
-        });
+    return registry ->
+        registry
+            .observationConfig()
+            .observationPredicate(
+                (name, context) -> {
+                  if (context instanceof ServerRequestObservationContext serverContext) {
+                    return !serverContext.getCarrier().getRequestURI().startsWith("/actuator");
+                  }
+                  return true;
+                });
   }
 }
