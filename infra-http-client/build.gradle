@@ -1,0 +1,13 @@
+// infra-http-client :: HTTP client infrastructure.
+// Implements HttpClient port from core-entities via OkHttp.
+
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation project(':core-entities')
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+}
+
+bootJar.enabled = false
+jar.enabled = true

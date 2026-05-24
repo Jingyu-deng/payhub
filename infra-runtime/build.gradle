@@ -1,0 +1,19 @@
+// infra-runtime :: SPI discovery and dependency wiring for Control beans.
+// Discovers Control SPI implementations and wires infrastructure dependencies
+// (DatabaseClient, IdempotencyClient, EventPublisher, AdapterClient) at getControl() time.
+
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation project(':core-entities')
+    implementation 'org.springframework.boot:spring-boot-starter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+bootJar.enabled = false
+jar.enabled = true
+
+tasks.register('verifyWiring', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.payhub.infra.runtime.ControlClientVerification'
+}

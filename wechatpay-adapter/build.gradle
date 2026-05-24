@@ -1,4 +1,4 @@
-// alipay-adapter :: Alipay PaymentAdapter implementation.
+// wechatpay-adapter :: WeChat Pay implementation.
 // Depends ONLY on core-entities — never on infra or Spring.
 
 dependencies {

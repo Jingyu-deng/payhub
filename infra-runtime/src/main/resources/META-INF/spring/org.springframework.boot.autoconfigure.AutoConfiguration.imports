@@ -1,0 +1,4 @@
+com.payhub.infra.runtime.ControlClientImpl
+com.payhub.infra.runtime.ControlBeanDefinitionRegistrar
+com.payhub.infra.runtime.AdapterClientImpl
+com.payhub.infra.runtime.AdapterBeanDefinitionRegistrar

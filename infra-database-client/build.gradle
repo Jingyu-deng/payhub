@@ -1,0 +1,13 @@
+// infra-database-client :: DatabaseClient port implementation.
+// Provides persistence adapters (in-memory for dev, JPA for production).
+
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation project(':core-entities')
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'jakarta.persistence:jakarta.persistence-api'
+}
+
+bootJar.enabled = false
+jar.enabled = true

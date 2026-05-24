@@ -1,0 +1,22 @@
+// payment-platform :: Composition root.
+// Aggregates core-entities, core-applications, all adapters, and all infra modules
+// into a unified Spring Boot payment platform.
+//
+// Infrastructure (Kafka, Redis, JPA, PostgreSQL) is provided by infra-* modules,
+// not pulled in here directly.
+
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation project(':core-entities')
+    implementation project(':core-applications')
+    implementation project(':alipay-adapter')
+    implementation project(':wechatpay-adapter')
+    implementation project(':infra-http-client')
+    implementation project(':infra-message-client')
+    implementation project(':infra-database-client')
+    implementation project(':infra-idempotent-client')
+    implementation project(':infra-runtime')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}

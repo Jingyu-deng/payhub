@@ -53,7 +53,7 @@ PayHub uses **Java SPI (Service Provider Interface)** to dynamically discover pa
 - **WeChat Pay** – `wechat-pay-adapter` module
 - **Alipay** – `alipay-adapter` module
 
-Adding a new gateway requires a new module implementing `PaymentGateway` and providing a `META-INF/services/com.payhub.common.payment.PaymentGateway` file.
+Adding a new gateway requires a new module implementing `PaymentAdapter` and providing a `META-INF/services/com.payhub.core.spi.PaymentAdapter` file.
 
 ## Quick Start
 

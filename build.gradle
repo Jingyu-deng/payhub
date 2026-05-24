@@ -10,16 +10,13 @@ allprojects {
     version = '1.0.0'
     repositories {
         mavenCentral()
-        // 可选：添加国内镜像
-        // maven { url 'https://maven.aliyun.com/repository/public' }
     }
 }
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
-    apply plugin: 'com.diffplug.spotless'  
+    apply plugin: 'com.diffplug.spotless'
 
     spotless {
         java {
@@ -28,17 +25,17 @@ subprojects {
         }
     }
 
-    // sourceCompatibility = '21'
-    // targetCompatibility = '21'
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
 
+}
+
+// Modules that can use framework dependencies (everything except core)
+configure(subprojects.findAll { !(it.name in ['core-entities', 'core-applications', 'alipay-adapter', 'wechatpay-adapter']) }) {
     dependencies {
-        implementation 'org.springframework.boot:spring-boot-starter'
         implementation 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    }
-
-    tasks.named('test') {
-        useJUnitPlatform()
     }
 }

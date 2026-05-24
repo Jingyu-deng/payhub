@@ -1,0 +1,8 @@
+// core-applications :: Concrete template bridge (CreatePaymentControl).
+// Depends only on core-entities (ports/interfaces) — no framework deps.
+
+dependencies {
+    implementation project(':core-entities')
+}
+
+// No Spring Boot — plain jar only

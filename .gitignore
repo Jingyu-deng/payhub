@@ -23,3 +23,5 @@ Thumbs.db
 
 # Sensitive config (if any)
 # application-prod.yml
+# IDE output
+bin/

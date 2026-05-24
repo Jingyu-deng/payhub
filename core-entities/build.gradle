@@ -1,0 +1,11 @@
+// core-entities :: Domain models, value objects, domain events,
+// domain exceptions, SPI contract, and JPA entities.
+// Depends only on Jakarta Persistence API (standard spec, no framework).
+
+dependencies {
+    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+    compileOnly 'org.projectlombok:lombok:1.18.36'
+    annotationProcessor 'org.projectlombok:lombok:1.18.36'
+}
+
+// No Spring Boot — plain jar only

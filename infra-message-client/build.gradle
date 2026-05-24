@@ -1,0 +1,11 @@
+// infra-message-client :: EventPublisher port implementation (in-memory for dev).
+
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation project(':core-entities')
+    implementation 'org.springframework.boot:spring-boot-starter'
+}
+
+bootJar.enabled = false
+jar.enabled = true
