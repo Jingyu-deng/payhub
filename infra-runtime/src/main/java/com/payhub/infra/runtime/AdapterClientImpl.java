@@ -28,8 +28,7 @@ public class AdapterClientImpl implements AdapterClient {
         beans.values().stream()
             .filter(a -> a.getGateway() == gatewayName)
             .findFirst()
-            .orElseThrow(
-                () -> new ServiceNotFoundException(gatewayName.name()));
+            .orElseThrow(() -> new ServiceNotFoundException(gatewayName.name()));
 
     injectHttpClient(adapter);
     return adapter;
