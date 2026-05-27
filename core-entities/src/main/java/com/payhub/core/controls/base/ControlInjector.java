@@ -1,9 +1,11 @@
-package com.payhub.core.controls;
+package com.payhub.core.controls.base;
 
 import com.payhub.core.infra.AdapterClient;
+import com.payhub.core.infra.ControlClient;
 import com.payhub.core.infra.DatabaseClient;
 import com.payhub.core.infra.EventPublisher;
 import com.payhub.core.infra.IdempotencyClient;
+import com.payhub.core.infra.SchedulerClient;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,8 +20,10 @@ import lombok.Setter;
 @Setter
 public abstract class ControlInjector<I, O> implements Control<I, O> {
 
-  AdapterClient adapterClient;
-  DatabaseClient databaseClient;
-  IdempotencyClient idempotencyClient;
-  EventPublisher eventPublisher;
+  protected AdapterClient adapterClient;
+  protected DatabaseClient databaseClient;
+  protected IdempotencyClient idempotencyClient;
+  protected EventPublisher eventPublisher;
+  protected SchedulerClient schedulerClient;
+  protected ControlClient controlClient;
 }

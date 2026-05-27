@@ -1,0 +1,15 @@
+// infra-scheduler :: SchedulerClient port implementation.
+// Uses Quartz with JDBC JobStore for persistent scheduling that survives restarts.
+
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation project(':infra-common')
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    runtimeOnly 'org.postgresql:postgresql'
+}
+
+bootJar.enabled = false
+jar.enabled = true

@@ -1,6 +1,6 @@
 package com.payhub.core.enums;
 
-public enum PaymentMethod {
-  WECHAT,
+public enum PaymentGateway {
+  WECHAT_PAY,
   ALIPAY
 }

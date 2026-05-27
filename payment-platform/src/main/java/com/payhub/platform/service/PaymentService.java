@@ -7,6 +7,8 @@ import com.payhub.core.dto.PaymentInitiateResponse;
 import com.payhub.core.dto.ProcessPaymentRequest;
 import com.payhub.core.dto.ProcessPaymentResponse;
 import com.payhub.core.infra.ControlClient;
+import com.payhub.core.template.CreatePaymentControl;
+import com.payhub.core.template.ProcessPaymentControl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -21,12 +23,12 @@ public class PaymentService {
   }
 
   public PaymentInitiateResponse initiate(PaymentInitiateRequest request) {
-    CreatePaymentTemplate template = controlClient.getControl(CreatePaymentTemplate.class);
+    CreatePaymentTemplate template = controlClient.getControl(CreatePaymentControl.class);
     return template.execute(request);
   }
 
   public ProcessPaymentResponse process(ProcessPaymentRequest request) {
-    ProcessPaymentTemplate template = controlClient.getControl(ProcessPaymentTemplate.class);
+    ProcessPaymentTemplate template = controlClient.getControl(ProcessPaymentControl.class);
     return template.execute(request);
   }
 }

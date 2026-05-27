@@ -1,6 +1,6 @@
 package com.payhub.core.infra;
 
-import com.payhub.core.controls.Control;
+import com.payhub.core.controls.base.Control;
 
 /**
  * Port for obtaining {@link Control} control instances. Looks up the SPI-registered implementation

@@ -21,4 +21,9 @@ public class DatabaseClientImpl implements DatabaseClient {
   public Optional<Payment> findByOrderId(String orderId) {
     return Optional.ofNullable(store.get(orderId));
   }
+
+  @Override
+  public Optional<Payment> findByPaymentId(String paymentId) {
+    return store.values().stream().filter(p -> paymentId.equals(p.getId())).findFirst();
+  }
 }

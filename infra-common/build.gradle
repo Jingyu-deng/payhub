@@ -1,0 +1,13 @@
+// infra-common :: Shared Spring utilities for infra modules.
+// Depends on Spring Boot, used by all other infra-* modules.
+
+apply plugin: 'java-library'
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    api project(':core-entities')
+    api 'org.springframework.boot:spring-boot-starter'
+}
+
+bootJar.enabled = false
+jar.enabled = true

@@ -1,16 +1,20 @@
 package com.payhub.core.controls;
 
+import com.payhub.core.controls.base.ControlInjector;
 import com.payhub.core.domain.Payment;
 import com.payhub.core.domain.PaymentEvent;
 import com.payhub.core.dto.PaymentInitiateRequest;
 import com.payhub.core.dto.PaymentInitiateResponse;
+import com.payhub.core.enums.PaymentStatus;
 import com.payhub.core.exception.DuplicatePaymentException;
 import com.payhub.core.exception.LockAcquisitionException;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Template for creating a payment order. No gateway invocation — the user has not selected a
  * payment method yet. Lock, idempotency, persistence, and event publishing are handled here.
  */
+@Slf4j
 public abstract class CreatePaymentTemplate
     extends ControlInjector<PaymentInitiateRequest, PaymentInitiateResponse> {
 
@@ -38,7 +42,12 @@ public abstract class CreatePaymentTemplate
 
       eventPublisher.publish(
           new PaymentEvent(
-              PaymentEvent.Type.INITIATED, payment.getOrderId(), payment.getId(), null, null));
+              PaymentStatus.INITIATED,
+              payment.getOrderId(),
+              payment.getId(),
+              null,
+              null,
+              System.currentTimeMillis()));
 
       return buildResponse(payment);
 

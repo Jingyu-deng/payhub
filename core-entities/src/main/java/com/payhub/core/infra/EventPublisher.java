@@ -9,8 +9,4 @@ import com.payhub.core.domain.PaymentEvent;
 public interface EventPublisher {
 
   void publish(PaymentEvent event);
-
-  default String topicName() {
-    return "payment-events";
-  }
 }

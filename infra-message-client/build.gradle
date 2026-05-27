@@ -1,10 +1,10 @@
-// infra-message-client :: EventPublisher port implementation (in-memory for dev).
+// infra-message-client :: EventPublisher port implementation + Kafka messaging.
 
 apply plugin: 'org.springframework.boot'
 
 dependencies {
-    implementation project(':core-entities')
-    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation project(':infra-common')
+    implementation 'org.springframework.kafka:spring-kafka'
 }
 
 bootJar.enabled = false

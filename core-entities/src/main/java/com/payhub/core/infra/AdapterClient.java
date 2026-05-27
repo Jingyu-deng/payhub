@@ -1,6 +1,7 @@
 package com.payhub.core.infra;
 
 import com.payhub.core.adapters.Adapter;
+import com.payhub.core.enums.PaymentGateway;
 import java.util.List;
 
 /**
@@ -8,7 +9,7 @@ import java.util.List;
  */
 public interface AdapterClient {
 
-  Adapter getAdapter(String gatewayName);
+  Adapter getAdapter(PaymentGateway gatewayName);
 
   List<Adapter> getAllAdapters();
 }

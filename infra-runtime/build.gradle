@@ -5,8 +5,7 @@
 apply plugin: 'org.springframework.boot'
 
 dependencies {
-    implementation project(':core-entities')
-    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation project(':infra-common')
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

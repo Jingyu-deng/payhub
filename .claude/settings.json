@@ -59,7 +59,23 @@
       "Bash(MSYS2_ARG_CONV_EXCL=\"*\" taskkill /F /PID 126064)",
       "Bash(MSYS2_ARG_CONV_EXCL=\"*\" taskkill /F /PID 134280)",
       "Bash(cmd.exe /c \"powershell.exe -ExecutionPolicy Bypass -File E:\\\\payhub\\\\.claude\\\\check-lock.ps1\")",
-      "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"E:\\\\\\\\payhub\\\\\\\\.claude\\\\\\\\find-lock.ps1\")"
+      "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"E:\\\\\\\\payhub\\\\\\\\.claude\\\\\\\\find-lock.ps1\")",
+      "Bash(./gradlew spotlessApply build)",
+      "Bash(git -C \"e:/payhub\" status --short)",
+      "Bash(./gradlew :alipay-adapter:clean :alipay-adapter:compileJava)",
+      "Bash(./gradlew :core-entities:compileJava)",
+      "Bash(./gradlew :alipay-adapter:compileJava)",
+      "Bash(./gradlew :infra-scheduler:compileJava)",
+      "Bash(./gradlew :payment-platform:compileJava)",
+      "Bash(./gradlew :infra-scheduler:compileJava :payment-platform:compileJava)",
+      "Bash(./gradlew :payment-platform:bootRun)",
+      "Bash(./gradlew :payment-platform:bootRun --args='--debug')",
+      "Bash(cmd //c \"netstat -ano | findstr :8080\")",
+      "Bash(taskkill //F //PID 359376)",
+      "Bash(./gradlew core-entities:dependencies --configuration implementation)",
+      "Bash(./gradlew core-entities:compileJava)",
+      "Bash(./gradlew core-entities:compileJava infra-scheduler:compileJava)",
+      "Bash(./gradlew infra-scheduler:compileJava)"
     ]
   }
 }

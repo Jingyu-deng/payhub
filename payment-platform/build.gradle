@@ -16,6 +16,7 @@ dependencies {
     implementation project(':infra-message-client')
     implementation project(':infra-database-client')
     implementation project(':infra-idempotent-client')
+    implementation project(':infra-scheduler')
     implementation project(':infra-runtime')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'

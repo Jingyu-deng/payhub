@@ -1,6 +1,6 @@
 package com.payhub.infra.runtime;
 
-import com.payhub.core.controls.Control;
+import com.payhub.core.controls.base.Control;
 import java.util.ServiceLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.BeanDefinition;

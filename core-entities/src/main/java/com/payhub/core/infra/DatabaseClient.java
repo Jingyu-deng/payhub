@@ -9,4 +9,6 @@ public interface DatabaseClient {
   void save(Payment payment);
 
   Optional<Payment> findByOrderId(String orderId);
+
+  Optional<Payment> findByPaymentId(String paymentId);
 }

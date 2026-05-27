@@ -2,6 +2,7 @@ package com.payhub.infra.runtime;
 
 import com.payhub.core.adapters.Adapter;
 import com.payhub.core.adapters.AdapterInjector;
+import com.payhub.core.enums.PaymentGateway;
 import com.payhub.core.infra.AdapterClient;
 import com.payhub.core.infra.HttpClient;
 import java.util.List;
@@ -20,11 +21,11 @@ public class AdapterClientImpl implements AdapterClient {
   }
 
   @Override
-  public Adapter getAdapter(String gatewayName) {
+  public Adapter getAdapter(PaymentGateway gatewayName) {
     var beans = applicationContext.getBeansOfType(Adapter.class);
     Adapter adapter =
         beans.values().stream()
-            .filter(a -> a.getGatewayName().equalsIgnoreCase(gatewayName))
+            .filter(a -> a.getGateway() == gatewayName)
             .findFirst()
             .orElseThrow(
                 () -> new IllegalArgumentException("No Adapter found for name: " + gatewayName));

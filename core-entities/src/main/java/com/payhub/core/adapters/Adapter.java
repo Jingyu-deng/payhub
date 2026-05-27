@@ -1,8 +1,10 @@
 package com.payhub.core.adapters;
 
 import com.payhub.core.domain.PaymentResult;
+import com.payhub.core.domain.PaymentStatusResult;
 import com.payhub.core.domain.RefundResult;
 import com.payhub.core.enums.Currency;
+import com.payhub.core.enums.PaymentGateway;
 import java.math.BigDecimal;
 import java.util.Map;
 
@@ -17,5 +19,7 @@ public interface Adapter {
 
   RefundResult refund(String transactionId, BigDecimal amount);
 
-  String getGatewayName();
+  PaymentStatusResult checkPaymentStatus(String transactionId);
+
+  PaymentGateway getGateway();
 }

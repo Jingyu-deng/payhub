@@ -1,5 +1,6 @@
 package com.payhub.core.dto;
 
+import com.payhub.core.enums.PaymentGateway;
 import java.util.Map;
 import lombok.Data;
 
@@ -9,6 +10,6 @@ public class ProcessPaymentRequest {
 
   private String paymentId;
   private String orderId;
-  private String gatewayName;
+  private PaymentGateway gatewayName;
   private Map<String, String> params;
 }
