@@ -60,7 +60,11 @@ public class ControlJob extends QuartzJobBean {
             "Control {} returned true, cancelling recurring job {}",
             controlTypeName,
             context.getJobDetail().getKey());
-        context.getScheduler().deleteJob(context.getJobDetail().getKey());
+        try {
+          context.getScheduler().deleteJob(context.getJobDetail().getKey());
+        } catch (Exception e) {
+          log.error("Failed to cancel completed recurring job: {}", e.getMessage(), e);
+        }
       }
     } catch (Exception e) {
       log.error("Failed to execute scheduled control {}: {}", controlTypeName, e.getMessage(), e);

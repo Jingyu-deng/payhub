@@ -3,6 +3,7 @@ package com.payhub.infra.runtime;
 import com.payhub.core.adapters.Adapter;
 import com.payhub.core.adapters.AdapterInjector;
 import com.payhub.core.enums.PaymentGateway;
+import com.payhub.core.exception.ServiceNotFoundException;
 import com.payhub.core.infra.AdapterClient;
 import com.payhub.core.infra.HttpClient;
 import java.util.List;
@@ -28,7 +29,7 @@ public class AdapterClientImpl implements AdapterClient {
             .filter(a -> a.getGateway() == gatewayName)
             .findFirst()
             .orElseThrow(
-                () -> new IllegalArgumentException("No Adapter found for name: " + gatewayName));
+                () -> new ServiceNotFoundException(gatewayName.name()));
 
     injectHttpClient(adapter);
     return adapter;
@@ -41,7 +42,7 @@ public class AdapterClientImpl implements AdapterClient {
         .toList();
   }
 
-  private void injectHttpClient(Object adapter) {
+  private void injectHttpClient(Adapter adapter) {
     if (adapter instanceof AdapterInjector injector) {
       injector.setHttpClient(httpClient);
     }
