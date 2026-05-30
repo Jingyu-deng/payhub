@@ -3,6 +3,7 @@ package com.payhub.core.controls;
 import com.payhub.core.adapters.Adapter;
 import com.payhub.core.controls.base.ControlInjector;
 import com.payhub.core.domain.Payment;
+import com.payhub.core.domain.PaymentEvent;
 import com.payhub.core.domain.PaymentStatusResult;
 import com.payhub.core.dto.CheckPaymentStatusRequest;
 import com.payhub.core.enums.PaymentStatus;
@@ -10,8 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Template for checking the status of a payment with the gateway. Looks up the payment, queries the
- * adapter for the current status, updates the persisted status, and returns whether the payment has
- * reached a terminal state.
+ * adapter for the current status, updates the persisted status, publishes an event if terminal, and
+ * returns whether the payment has reached a terminal state.
  *
  * <p>Triggered by the periodic timer scheduled in {@link ProcessPaymentTemplate}, not by an
  * endpoint.
@@ -38,6 +39,11 @@ public abstract class CheckPaymentStatusTemplate
     payment.setStatus(result.getStatus());
     payment.setGatewayResponse(result.getRawResponse());
     databaseClient.save(payment);
+
+    if (isTerminal(payment.getStatus())) {
+      eventPublisher.publish(
+          new PaymentEvent(payment.getStatus(), payment, System.currentTimeMillis()));
+    }
 
     return isTerminal(payment.getStatus());
   }

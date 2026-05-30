@@ -33,6 +33,7 @@ public class CreatePaymentControl extends CreatePaymentTemplate {
     payment.setAmount(request.getAmount());
     payment.setCurrency(request.getCurrency() != null ? request.getCurrency() : Currency.CNY);
     payment.setStatus(PaymentStatus.INITIATED);
+    payment.setNotifyUrl(request.getNotifyUrl());
     return payment;
   }
 
