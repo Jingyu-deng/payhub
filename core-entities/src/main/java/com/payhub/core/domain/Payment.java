@@ -20,6 +20,7 @@ public class Payment {
   private PaymentGateway paymentGateway;
   private String transactionId;
   private String gatewayResponse;
+  private String notifyUrl;
   private String checkPgStatusControlJobKey;
 
   @Setter(AccessLevel.NONE)

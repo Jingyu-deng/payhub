@@ -66,10 +66,7 @@ public abstract class ProcessPaymentTemplate
         eventPublisher.publish(
             new PaymentEvent(
                 PaymentStatus.PROCESSING,
-                payment.getOrderId(),
-                payment.getId(),
-                adapter.getGateway(),
-                result.getTransactionId(),
+                payment,
                 System.currentTimeMillis()));
 
         afterPaymentProcessed(payment);

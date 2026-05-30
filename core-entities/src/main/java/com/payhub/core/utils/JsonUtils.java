@@ -3,6 +3,7 @@ package com.payhub.core.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.payhub.core.exception.SerializationException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -13,7 +14,7 @@ import org.slf4j.LoggerFactory;
 public final class JsonUtils {
 
   private static final Logger log = LoggerFactory.getLogger(JsonUtils.class);
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
 
   public static String toJson(Object value) {
     try {

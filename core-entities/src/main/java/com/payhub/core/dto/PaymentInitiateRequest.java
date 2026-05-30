@@ -10,4 +10,5 @@ public class PaymentInitiateRequest {
   private String orderId;
   private BigDecimal amount;
   private Currency currency;
+  private String notifyUrl;
 }

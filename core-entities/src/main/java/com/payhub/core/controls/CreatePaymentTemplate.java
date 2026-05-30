@@ -43,10 +43,7 @@ public abstract class CreatePaymentTemplate
       eventPublisher.publish(
           new PaymentEvent(
               PaymentStatus.INITIATED,
-              payment.getOrderId(),
-              payment.getId(),
-              null,
-              null,
+              payment,
               System.currentTimeMillis()));
 
       return buildResponse(payment);
