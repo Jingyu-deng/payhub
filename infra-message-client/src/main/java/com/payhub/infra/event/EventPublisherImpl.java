@@ -29,7 +29,6 @@ public class EventPublisherImpl implements EventPublisher {
     String encrypted = encryptionClient.encrypt(json);
     String key = event.getPayment().getId();
     kafkaTemplate.send(TOPIC, key, encrypted);
-    log.info(
-        "Event published: type={}, paymentId={}", event.getType(), event.getPayment().getId());
+    log.info("Event published: type={}, paymentId={}", event.getType(), event.getPayment().getId());
   }
 }

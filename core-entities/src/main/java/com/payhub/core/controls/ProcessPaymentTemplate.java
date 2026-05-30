@@ -64,10 +64,7 @@ public abstract class ProcessPaymentTemplate
         idempotencyClient.markAsProcessed(idempotencyKey);
 
         eventPublisher.publish(
-            new PaymentEvent(
-                PaymentStatus.PROCESSING,
-                payment,
-                System.currentTimeMillis()));
+            new PaymentEvent(PaymentStatus.PROCESSING, payment, System.currentTimeMillis()));
 
         afterPaymentProcessed(payment);
 

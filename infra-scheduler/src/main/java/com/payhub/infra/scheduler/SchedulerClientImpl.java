@@ -50,7 +50,7 @@ public class SchedulerClientImpl implements SchedulerClient {
         TriggerBuilder.newTrigger()
             .forJob(job)
             .withIdentity(jobId)
-            .startNow()
+            .startAt(new Date(now + interval.toMillis()))
             .withSchedule(
                 SimpleScheduleBuilder.simpleSchedule()
                     .withIntervalInMilliseconds(interval.toMillis())

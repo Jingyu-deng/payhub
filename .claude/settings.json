@@ -75,7 +75,23 @@
       "Bash(./gradlew core-entities:dependencies --configuration implementation)",
       "Bash(./gradlew core-entities:compileJava)",
       "Bash(./gradlew core-entities:compileJava infra-scheduler:compileJava)",
-      "Bash(./gradlew infra-scheduler:compileJava)"
+      "Bash(./gradlew infra-scheduler:compileJava)",
+      "Bash(./gradlew :core-entities:test --tests \"com.payhub.core.domain.PaymentEventTest\")",
+      "Bash(python3)",
+      "Bash(where python *)",
+      "Bash(python -c ' *)",
+      "Bash(./gradlew :core-entities:test --tests \"com.payhub.core.domain.PaymentEventTest\" --info)",
+      "Bash(python -c \"import sys; import xml.etree.ElementTree as ET; tree=ET.parse\\(sys.stdin\\); root=tree.getroot\\(\\); [print\\(tc.get\\('name'\\), tc.find\\('failure'\\).get\\('message',''\\)[:300] if tc.find\\('failure'\\) is not None else 'PASS'\\) for tc in root.findall\\('testcase'\\)]\")",
+      "Bash(./gradlew :core-entities:test --tests \"com.payhub.core.domain.PaymentEventTest\" --stacktrace)",
+      "Bash(./gradlew :infra-message-client:test --tests \"com.payhub.infra.event.EncryptionClientImplTest\")",
+      "Bash(./gradlew :infra-message-client:compileJava)",
+      "Bash(./gradlew :core-entities:test --tests \"com.payhub.core.controls.base.EventControlTest\")",
+      "Bash(./gradlew :core-entities:test --tests \"com.payhub.core.controls.CheckPaymentStatusTemplateTest\")",
+      "Bash(./gradlew :core-entities:test --tests \"com.payhub.core.controls.CheckPaymentStatusTemplateTest\" :core-applications:test)",
+      "Bash(./gradlew :infra-message-client:test :core-applications:test)",
+      "Bash(./gradlew :infra-message-client:compileJava :core-applications:compileJava)",
+      "Bash(./gradlew :core-applications:compileJava)",
+      "Bash(./gradlew :core-entities:test :core-applications:test :infra-message-client:test :infra-runtime:test)"
     ]
   }
 }

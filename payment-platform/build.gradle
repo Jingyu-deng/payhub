@@ -18,6 +18,7 @@ dependencies {
     implementation project(':infra-idempotent-client')
     implementation project(':infra-scheduler')
     implementation project(':infra-runtime')
+    implementation project(':infra-common')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
 }

@@ -26,11 +26,9 @@ public class EventListenerImpl implements EventListener {
   public void onMessage(String encryptedPayload) {
     String json = encryptionClient.decrypt(encryptedPayload);
     PaymentEvent event = JsonUtils.fromJson(json, PaymentEvent.class);
-    log.info(
-        "Event received: type={}, paymentId={}", event.getType(), event.getPayment().getId());
+    log.info("Event received: type={}, paymentId={}", event.getType(), event.getPayment().getId());
 
-    for (EventControl<PaymentEvent> control :
-        controlClient.getEventControls(event.getType())) {
+    for (EventControl<PaymentEvent> control : controlClient.getEventControls(event.getType())) {
       control.execute(event);
     }
   }

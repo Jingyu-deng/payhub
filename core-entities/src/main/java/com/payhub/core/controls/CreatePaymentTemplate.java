@@ -41,10 +41,7 @@ public abstract class CreatePaymentTemplate
       idempotencyClient.markAsProcessed(idempotencyKey);
 
       eventPublisher.publish(
-          new PaymentEvent(
-              PaymentStatus.INITIATED,
-              payment,
-              System.currentTimeMillis()));
+          new PaymentEvent(PaymentStatus.INITIATED, payment, System.currentTimeMillis()));
 
       return buildResponse(payment);
 

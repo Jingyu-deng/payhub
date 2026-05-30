@@ -69,8 +69,7 @@ class CheckPaymentStatusTemplateTest {
     PaymentEvent published = captor.getValue();
     assertEquals(PaymentStatus.COMPLETED, published.getType());
     assertEquals("pay-1", published.getPayment().getId());
-    assertEquals(
-        "https://partner.example.com/webhook", published.getPayment().getNotifyUrl());
+    assertEquals("https://partner.example.com/webhook", published.getPayment().getNotifyUrl());
   }
 
   @Test
@@ -113,8 +112,7 @@ class CheckPaymentStatusTemplateTest {
     Adapter adapter = mock(Adapter.class);
     when(adapterClient.getAdapter(PaymentGateway.WECHAT_PAY)).thenReturn(adapter);
 
-    PaymentStatusResult result =
-        new PaymentStatusResult(PaymentStatus.PROCESSING, "{}");
+    PaymentStatusResult result = new PaymentStatusResult(PaymentStatus.PROCESSING, "{}");
     when(adapter.checkPaymentStatus("txn-789")).thenReturn(result);
 
     CheckPaymentStatusRequest request = new CheckPaymentStatusRequest();

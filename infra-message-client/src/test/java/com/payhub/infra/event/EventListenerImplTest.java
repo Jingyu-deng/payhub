@@ -35,8 +35,7 @@ class EventListenerImplTest {
     when(encryptionClient.decrypt(encryptedPayload)).thenReturn(json);
 
     EventControl<PaymentEvent> mockControl = mock(EventControl.class);
-    when(controlClient.getEventControls(PaymentStatus.COMPLETED))
-        .thenReturn(List.of(mockControl));
+    when(controlClient.getEventControls(PaymentStatus.COMPLETED)).thenReturn(List.of(mockControl));
 
     listener.onMessage(encryptedPayload);
 

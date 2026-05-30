@@ -42,8 +42,7 @@ class ControlClientImplTest {
     EventControl initiatedControl = mock(EventControl.class);
     when(initiatedControl.getHandledEventType()).thenReturn(PaymentStatus.INITIATED);
 
-    Map<String, EventControl> beans =
-        Map.of("c1", completedControl, "c2", initiatedControl);
+    Map<String, EventControl> beans = Map.of("c1", completedControl, "c2", initiatedControl);
     when(applicationContext.getBeansOfType(EventControl.class)).thenReturn((Map) beans);
 
     List<EventControl<PaymentEvent>> result =
