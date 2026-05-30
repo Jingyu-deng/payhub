@@ -11,6 +11,6 @@ public class EventPublisherImpl implements EventPublisher {
 
   @Override
   public void publish(PaymentEvent event) {
-    log.info("[IN-MEMORY] Event published: " + event.getType() + " order=" + event.getOrderId());
+    log.info("[IN-MEMORY] Event published: " + event.getType() + " order=" + event.getPayment().getOrderId());
   }
 }
