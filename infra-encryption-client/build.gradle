@@ -1,0 +1,11 @@
+// infra-encryption-client :: EncryptionClient port implementation (no-op stub for now).
+
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation project(':infra-common')
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+bootJar.enabled = false
+jar.enabled = true

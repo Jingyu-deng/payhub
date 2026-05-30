@@ -1,4 +1,4 @@
-package com.payhub.platform.config;
+package com.payhub.infra.event;
 
 import com.payhub.infra.common.YamlPropertySourceFactory;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.payhub.infra.event;
+package com.payhub.infra.encryption;
 
 import static org.junit.jupiter.api.Assertions.*;
 

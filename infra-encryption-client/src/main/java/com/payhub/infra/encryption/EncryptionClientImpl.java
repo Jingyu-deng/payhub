@@ -1,4 +1,4 @@
-package com.payhub.infra.event;
+package com.payhub.infra.encryption;
 
 import com.payhub.core.infra.EncryptionClient;
 import org.springframework.stereotype.Component;

@@ -13,6 +13,7 @@ dependencies {
     implementation project(':alipay-adapter')
     implementation project(':wechatpay-adapter')
     implementation project(':infra-http-client')
+    implementation project(':infra-encryption-client')
     implementation project(':infra-message-client')
     implementation project(':infra-database-client')
     implementation project(':infra-idempotent-client')
