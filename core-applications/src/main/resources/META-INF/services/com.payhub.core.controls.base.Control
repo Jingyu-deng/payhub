@@ -1,3 +1,4 @@
 com.payhub.core.template.CreatePaymentControl
 com.payhub.core.template.ProcessPaymentControl
 com.payhub.core.template.CheckPaymentStatusControl
+com.payhub.core.template.NotifyPartnerControl

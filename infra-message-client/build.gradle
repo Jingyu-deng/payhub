@@ -5,6 +5,8 @@ apply plugin: 'org.springframework.boot'
 dependencies {
     implementation project(':infra-common')
     implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
