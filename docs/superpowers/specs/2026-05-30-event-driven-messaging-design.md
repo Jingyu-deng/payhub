@@ -2,9 +2,11 @@
 
 **Goal:** Replace the SLF4J-stub EventPublisher with real Kafka pub/sub and add an EventListener/EventControl mechanism so that domain events trigger downstream business logic (starting with partner notification on payment completion).
 
-**Architecture:** `PaymentEvent` is serialized as JSON to a Kafka topic (`payment-events`). A `@KafkaListener` deserializes and dispatches to SPI-discovered `EventControl<I>` implementations matched by event type. Each `EventControl` extends `ControlInjector` and receives all infra ports, including a new `HttpClient` field for outbound HTTP calls.
+**Architecture:** `PaymentEvent` wraps the `Payment` aggregate, is encrypted via `EncryptionClient`, and published to a Kafka topic (`payment-events`). A `@KafkaListener` decrypts and dispatches to `EventControl` implementations via a dedicated `ControlClient.getEventControls()` method. Each `EventControl` extends `ControlInjector` and receives all infra ports.
 
-**Tech Stack:** Spring Kafka (`KafkaTemplate`, `@KafkaListener`), Jackson JSON serialization, Java SPI (`ServiceLoader`), OkHttp for partner webhook delivery.
+**Tech Stack:** Spring Kafka (`KafkaTemplate`, `@KafkaListener`), Jackson JSON, Java SPI (`ServiceLoader`), OkHttp for partner webhook delivery.
+
+**MQ Switchability:** The `EventPublisher` and `EventListener` ports live in `core-entities`. Kafka-specific code is entirely contained in `infra-message-client` implementations. Switching to RabbitMQ or another broker requires only swapping those two `*Impl` classes — zero changes to ports, controls, or templates.
 
 ---
 
@@ -18,7 +20,7 @@ public class PaymentInitiateRequest {
     private String orderId;
     private BigDecimal amount;
     private Currency currency;
-    private String notifyUrl;  // NEW
+    private String notifyUrl;  // NEW: partner webhook URL
 }
 ```
 
@@ -26,28 +28,42 @@ public class PaymentInitiateRequest {
 
 ```java
 public class Payment {
-    // ... existing fields ...
+    // ... existing fields (id, orderId, amount, currency, status, paymentGateway,
+    //   transactionId, gatewayResponse, checkPgStatusControlJobKey, createdAt) ...
     private String notifyUrl;  // NEW
 }
 ```
 
-### 1.3 `PaymentEvent` — new field
+### 1.3 `PaymentEvent` — restructured to embed the Payment aggregate
 
 ```java
+@Data
+@AllArgsConstructor
 public class PaymentEvent {
-    private final PaymentStatus type;
-    private final String orderId;
-    private final String paymentId;
-    private final PaymentGateway gateway;
-    private final String transactionId;
-    private final long timestamp;
-    private final String notifyUrl;  // NEW
+    private final PaymentStatus type;    // the status transition this event represents
+    private final Payment payment;       // the full aggregate
+    private final long timestamp;        // epoch millis
 }
 ```
 
+No more individual field duplication. Consumers get the full Payment aggregate.
+
 ---
 
-## 2. New Port Interface: `EventListener` (`core-entities/.../infra/`)
+## 2. New Port Interface: `EncryptionClient` (`core-entities/.../infra/`)
+
+```java
+public interface EncryptionClient {
+    String encrypt(String plaintext);
+    String decrypt(String ciphertext);
+}
+```
+
+Used by `EventPublisherImpl` before publishing and `EventListenerImpl` after receiving. Implementation is a no-op stub for now (returns input unchanged) — see section 5.3.
+
+---
+
+## 3. New Port Interface: `EventListener` (`core-entities/.../infra/`)
 
 ```java
 public interface EventListener {
@@ -55,75 +71,86 @@ public interface EventListener {
 }
 ```
 
-Single method. Called by `EventListenerImpl` (Kafka consumer). Dispatches to the appropriate `EventControl`.
+`EventListenerImpl` (the Kafka consumer) calls this, then dispatches to `EventControl` instances via `ControlClient.getEventControls()`.
 
 ---
 
-## 3. New Abstract Base: `EventControl<I>` (`core-entities/.../controls/base/`)
+## 4. New Abstract Base: `EventControl<I>` (`core-entities/.../controls/base/`)
 
 ```java
 public abstract class EventControl<I> extends ControlInjector<I, Void> {
-    /** The PaymentStatus this control handles (e.g., COMPLETED). */
     public abstract PaymentStatus getHandledEventType();
 }
 ```
 
-Extends `ControlInjector<I, Void>` (event-driven flow has no return value — fire-and-forget). Each concrete subclass declares which `PaymentStatus` it handles.
+Extends `ControlInjector<I, Void>` — event-driven flow has no return value (fire-and-forget). Each concrete subclass declares which `PaymentStatus` it reacts to.
 
-Registered via SPI in `META-INF/services/com.payhub.core.controls.base.Control` (same as other controls).
-
----
-
-## 4. `ControlInjector` — Add `HttpClient`
-
-`ControlInjector` gains a new `protected HttpClient httpClient` field (with `@Getter @Setter` from Lombok). This allows any control, including event-driven ones, to make outbound HTTP calls.
-
-`ControlClientImpl` must also inject `HttpClient`.
+Registered via SPI in `META-INF/services/com.payhub.core.controls.base.Control` (same file as other controls).
 
 ---
 
-## 5. Kafka Implementation (`infra-message-client`)
+## 5. `ControlInjector` — Add `HttpClient`
 
-### 5.1 `EventPublisherImpl` — rewrite
+`ControlInjector` gains: `protected HttpClient httpClient` (with Lombok `@Getter @Setter`).
 
-Replace SLF4J stub. Inject `KafkaTemplate<String, String>`. Serialize `PaymentEvent` via `JsonUtils.toJson()` and send to topic `payment-events`.
+`ControlClientImpl` also receives `HttpClient` via constructor and sets it on each control.
 
-### 5.2 `EventListenerImpl` — new class
+---
+
+## 6. `ControlClient` — New Method
+
+New method on the port interface (`core-entities/.../infra/ControlClient.java`):
+
+```java
+List<EventControl<PaymentEvent>> getEventControls(PaymentStatus eventType);
+```
+
+`ControlClientImpl` implementation:
+1. Looks up all `EventControl` beans from `ApplicationContext`.
+2. Filters by `getHandledEventType()` matching `eventType`.
+3. Wires each matching control via `ControlInjector` setters (same wiring pattern as `getControl()`).
+4. Returns the list.
+
+`EventListenerImpl` calls this instead of doing its own wiring — keeps `EventListenerImpl` dedicated to Kafka message handling.
+
+---
+
+## 7. Kafka Implementation (`infra-message-client`)
+
+### 7.1 `EventPublisherImpl` — rewrite
+
+Replace SLF4J stub. Inject `KafkaTemplate<String, String>` and `EncryptionClient`.
+
+Flow:
+1. Serialize `PaymentEvent` → JSON via `JsonUtils.toJson()`.
+2. Encrypt via `encryptionClient.encrypt(json)`.
+3. Send to Kafka topic `payment-events`, keyed by `event.getPayment().getId()`.
+
+### 7.2 `EventListenerImpl` — new class
 
 `@Component` implementing `EventListener`:
 
-1. Wraps a `@KafkaListener(topics = "payment-events")` method.
-2. Deserializes JSON → `PaymentEvent` via `JsonUtils.fromJson()`.
-3. Looks up all `EventControl` beans from `ApplicationContext.getBeansOfType(EventControl.class)`.
-4. Filters by `getHandledEventType()` matching the event's type.
-5. For each matching control, injects all `ControlInjector` dependencies (same wiring pattern as `ControlClientImpl`: sets `adapterClient`, `databaseClient`, `idempotencyClient`, `eventPublisher`, `schedulerClient`, `controlClient`, `httpClient`).
-6. Calls `eventControl.execute(event)`.
+1. `@KafkaListener(topics = "payment-events")` method receives raw message.
+2. Decrypt via `encryptionClient.decrypt(raw)`.
+3. Deserialize JSON → `PaymentEvent` via `JsonUtils.fromJson()`.
+4. Calls `controlClient.getEventControls(event.getType())` to get wired `EventControl` list.
+5. Iterates and calls `control.execute(event)` on each.
 
-For now the `EventListener` port is consumed directly; the `EventListenerImpl` IS the Kafka listener that implements it. If we later add a second dispatch mechanism (e.g., in-process direct dispatch without Kafka), we can add another `EventListener` impl.
+### 7.3 `EncryptionClientImpl` — new no-op stub
 
-**Topic:** `payment-events` (single topic, keyed by paymentId for ordering). Consumer group: `payhub-consumer`.
+`@Component` implementing `EncryptionClient`. Both `encrypt()` and `decrypt()` return the input unchanged. Real encryption comes later when the implementation is built.
+
+### 7.4 Kafka Topic & Consumer Group
+
+- **Topic:** `payment-events`
+- **Consumer group:** `payhub-consumer`
+- **Key:** `payment.getId()` (keeps events for the same payment ordered)
 
 ---
 
-## 6. Kafka Config (`payment-platform`)
+## 8. Kafka Config (`payment-platform`)
 
-### 6.1 `PayHubKafkaConfig` — new `@Configuration`
-
-```java
-@Configuration
-public class PayHubKafkaConfig {
-    @Bean
-    public KafkaListenerContainerFactory<?> kafkaListenerContainerFactory(
-            ConsumerFactory<String, String> consumerFactory) {
-        ConcurrentKafkaListenerContainerFactory<String, String> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory);
-        return factory;
-    }
-}
-```
-
-### 6.2 `application.yml` — add Kafka properties
+### 8.1 `kafka.yml` — new file in `payment-platform/src/main/resources/`
 
 ```yaml
 spring:
@@ -139,23 +166,34 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 ```
 
-String serialization on both sides — JSON conversion is explicit in our code via `JsonUtils`.
+### 8.2 `PayHubKafkaConfig` — new `@Configuration`
+
+```java
+@Configuration
+@PropertySource(value = "classpath:kafka.yml", factory = YamlPropertySourceFactory.class)
+public class PayHubKafkaConfig {
+}
+```
+
+Spring Boot auto-configures `KafkaTemplate`, `ConsumerFactory`, and `KafkaListenerContainerFactory` from `spring.kafka.*` properties. No manual bean definitions needed. `YamlPropertySourceFactory` is the existing utility in `infra-common`.
+
+String serialization on both sides — JSON conversion and encryption are explicit in our code via `JsonUtils` and `EncryptionClient`.
 
 ---
 
-## 7. Event Publishing in Templates
+## 9. Event Publishing in Templates
 
-### 7.1 `CheckPaymentStatusTemplate` — add event publishing
+### 9.1 `CheckPaymentStatusTemplate` — add event publishing
 
-Currently this template does NOT publish events when status becomes terminal. We add `eventPublisher.publish(...)` when `isTerminal()` is true, including `notifyUrl` from the payment entity. This is the trigger for `NotifyPartnerControl`.
+This template currently does NOT publish events when status becomes terminal. Add `eventPublisher.publish(...)` after `isTerminal()` is true, before returning. The event wraps the `Payment` aggregate, so downstream controls (like `NotifyPartnerControl`) have all the data.
 
-### 7.2 `CreatePaymentTemplate` and `ProcessPaymentTemplate` — update event construction
+### 9.2 `CreatePaymentTemplate` and `ProcessPaymentTemplate` — update event construction
 
-Include `payment.getNotifyUrl()` in the `PaymentEvent` constructor calls.
+Use the new `PaymentEvent(type, payment, timestamp)` constructor. No need to extract individual fields.
 
 ---
 
-## 8. `NotifyPartnerControl` (`core-applications`)
+## 10. `NotifyPartnerControl` (`core-applications`)
 
 ```java
 public class NotifyPartnerControl extends EventControl<PaymentEvent> {
@@ -167,15 +205,17 @@ public class NotifyPartnerControl extends EventControl<PaymentEvent> {
 
     @Override
     public Void execute(PaymentEvent event) {
-        if (event.getNotifyUrl() == null || event.getNotifyUrl().isBlank()) {
-            return null;  // no webhook configured, skip
+        Payment payment = event.getPayment();
+        String notifyUrl = payment.getNotifyUrl();
+        if (notifyUrl == null || notifyUrl.isBlank()) {
+            return null;
         }
         String body = JsonUtils.toJson(event);
         HttpClient.Response response = httpClient.post(
-                event.getNotifyUrl(),
+                notifyUrl,
                 Map.of("Content-Type", "application/json"),
                 body);
-        log.info("Partner notified: url={}, status={}", event.getNotifyUrl(), response.getStatusCode());
+        log.info("Partner notified: url={}, status={}", notifyUrl, response.getStatusCode());
         return null;
     }
 }
@@ -185,7 +225,7 @@ Registered in `META-INF/services/com.payhub.core.controls.base.Control`.
 
 ---
 
-## 9. Files Summary
+## 11. Files Summary
 
 | Action | File |
 |---|---|
@@ -195,13 +235,16 @@ Registered in `META-INF/services/com.payhub.core.controls.base.Control`.
 | Modify | `core-entities/.../controls/base/ControlInjector.java` |
 | New | `core-entities/.../controls/base/EventControl.java` |
 | New | `core-entities/.../infra/EventListener.java` |
+| New | `core-entities/.../infra/EncryptionClient.java` |
+| Modify | `core-entities/.../infra/ControlClient.java` |
 | Modify | `core-entities/.../controls/CreatePaymentTemplate.java` |
 | Modify | `core-entities/.../controls/ProcessPaymentTemplate.java` |
 | Modify | `core-entities/.../controls/CheckPaymentStatusTemplate.java` |
 | Rewrite | `infra-message-client/.../EventPublisherImpl.java` |
 | New | `infra-message-client/.../EventListenerImpl.java` |
+| New | `infra-message-client/.../EncryptionClientImpl.java` |
 | Modify | `infra-runtime/.../ControlClientImpl.java` |
 | New | `payment-platform/.../config/PayHubKafkaConfig.java` |
-| Modify | `payment-platform/.../resources/application.yml` |
+| New | `payment-platform/.../resources/kafka.yml` |
 | New | `core-applications/.../NotifyPartnerControl.java` |
 | Modify | `core-applications/.../resources/META-INF/services/com.payhub.core.controls.base.Control` |
