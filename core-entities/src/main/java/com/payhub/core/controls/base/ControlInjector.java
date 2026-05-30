@@ -4,6 +4,7 @@ import com.payhub.core.infra.AdapterClient;
 import com.payhub.core.infra.ControlClient;
 import com.payhub.core.infra.DatabaseClient;
 import com.payhub.core.infra.EventPublisher;
+import com.payhub.core.infra.HttpClient;
 import com.payhub.core.infra.IdempotencyClient;
 import com.payhub.core.infra.SchedulerClient;
 import lombok.Getter;
@@ -26,4 +27,5 @@ public abstract class ControlInjector<I, O> implements Control<I, O> {
   protected EventPublisher eventPublisher;
   protected SchedulerClient schedulerClient;
   protected ControlClient controlClient;
+  protected HttpClient httpClient;
 }
