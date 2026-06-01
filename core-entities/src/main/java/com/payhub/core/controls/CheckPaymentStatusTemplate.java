@@ -41,8 +41,7 @@ public abstract class CheckPaymentStatusTemplate
     databaseClient.save(payment);
 
     if (isTerminal(payment.getStatus())) {
-      eventPublisher.publish(
-          new PaymentEvent(payment.getStatus(), payment, System.currentTimeMillis()));
+      eventPublisher.publish(new PaymentEvent(payment, System.currentTimeMillis()));
     }
 
     return isTerminal(payment.getStatus());

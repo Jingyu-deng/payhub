@@ -1,0 +1,2 @@
+poll-interval-seconds: 30
+max-poll-duration-minutes: 5

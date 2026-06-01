@@ -5,7 +5,6 @@ import com.payhub.core.domain.Payment;
 import com.payhub.core.domain.PaymentEvent;
 import com.payhub.core.dto.PaymentInitiateRequest;
 import com.payhub.core.dto.PaymentInitiateResponse;
-import com.payhub.core.enums.PaymentStatus;
 import com.payhub.core.exception.DuplicatePaymentException;
 import com.payhub.core.exception.LockAcquisitionException;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +39,7 @@ public abstract class CreatePaymentTemplate
 
       idempotencyClient.markAsProcessed(idempotencyKey);
 
-      eventPublisher.publish(
-          new PaymentEvent(PaymentStatus.INITIATED, payment, System.currentTimeMillis()));
+      eventPublisher.publish(new PaymentEvent(payment, System.currentTimeMillis()));
 
       return buildResponse(payment);
 

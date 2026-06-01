@@ -1,1 +1,4 @@
-com.payhub.infra.event.EventPublisherImpl
+com.payhub.infra.message.EventPublisherImpl
+com.payhub.infra.message.EventListenerImpl
+com.payhub.infra.message.PayHubKafkaConfig
+com.payhub.infra.message.SpringContextHolder

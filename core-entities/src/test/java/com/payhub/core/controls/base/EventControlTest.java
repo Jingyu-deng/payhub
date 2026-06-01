@@ -2,29 +2,30 @@ package com.payhub.core.controls.base;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.payhub.core.enums.PaymentStatus;
+import com.payhub.core.domain.PaymentEvent;
+import com.payhub.core.event.BaseEvent;
 import org.junit.jupiter.api.Test;
 
 class EventControlTest {
 
   @Test
   void shouldExtendControlInjectorAndDeclareHandledEventType() {
-    EventControl<String> control =
+    EventControl<PaymentEvent> control =
         new EventControl<>() {
           @Override
-          public PaymentStatus getHandledEventType() {
-            return PaymentStatus.COMPLETED;
+          public Class<? extends BaseEvent> getHandledEventType() {
+            return PaymentEvent.class;
           }
 
           @Override
-          public Void execute(String input) {
+          public Void execute(PaymentEvent input) {
             return null;
           }
         };
 
-    assertEquals(PaymentStatus.COMPLETED, control.getHandledEventType());
+    assertEquals(PaymentEvent.class, control.getHandledEventType());
     assertInstanceOf(ControlInjector.class, control);
     assertInstanceOf(Control.class, control);
-    assertNull(control.execute("test"));
+    assertNull(control.execute(new PaymentEvent()));
   }
 }

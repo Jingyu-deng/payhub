@@ -6,9 +6,13 @@ import com.payhub.core.domain.PaymentResult;
 import com.payhub.core.dto.CheckPaymentStatusRequest;
 import com.payhub.core.dto.ProcessPaymentRequest;
 import com.payhub.core.dto.ProcessPaymentResponse;
+import com.payhub.core.properties.CheckPaymentStatusProperties;
+import com.payhub.core.utils.YamlUtils;
 import java.time.Duration;
 
 public class ProcessPaymentControl extends ProcessPaymentTemplate {
+
+  private static final String CHECK_STATUS_CONFIG = "check-payment-status.yml";
 
   @Override
   protected void validate(ProcessPaymentRequest request) {
@@ -31,12 +35,15 @@ public class ProcessPaymentControl extends ProcessPaymentTemplate {
 
   @Override
   protected void afterPaymentProcessed(Payment payment) {
+    CheckPaymentStatusProperties props =
+        YamlUtils.loadFromClasspath(CHECK_STATUS_CONFIG, CheckPaymentStatusProperties.class);
+
     String jobKey =
         schedulerClient.scheduleRecurring(
             CheckPaymentStatusControl.class,
             new CheckPaymentStatusRequest(payment.getId()),
-            Duration.ofSeconds(30),
-            Duration.ofMinutes(5));
+            Duration.ofSeconds(props.getPollIntervalSeconds()),
+            Duration.ofMinutes(props.getMaxPollDurationMinutes()));
     payment.setCheckPgStatusControlJobKey(jobKey);
   }
 }

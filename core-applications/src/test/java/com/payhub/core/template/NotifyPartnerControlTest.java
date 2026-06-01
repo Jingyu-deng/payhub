@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.payhub.core.domain.Payment;
 import com.payhub.core.domain.PaymentEvent;
 import com.payhub.core.enums.PaymentStatus;
+import com.payhub.core.exception.PartnerNotificationException;
 import com.payhub.core.infra.HttpClient;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,8 +25,8 @@ class NotifyPartnerControlTest {
   }
 
   @Test
-  void shouldHandleCompletedEvents() {
-    assertEquals(PaymentStatus.COMPLETED, control.getHandledEventType());
+  void shouldHandlePaymentEvents() {
+    assertEquals(PaymentEvent.class, control.getHandledEventType());
   }
 
   @Test
@@ -36,7 +37,7 @@ class NotifyPartnerControlTest {
     payment.setNotifyUrl("https://partner.example.com/webhook");
     payment.setStatus(PaymentStatus.COMPLETED);
 
-    PaymentEvent event = new PaymentEvent(PaymentStatus.COMPLETED, payment, 1717000000000L);
+    PaymentEvent event = new PaymentEvent(payment, 1717000000000L);
 
     HttpClient.Response response = new HttpClient.Response(200, "OK");
     when(httpClient.post(eq("https://partner.example.com/webhook"), anyMap(), anyString()))
@@ -57,7 +58,7 @@ class NotifyPartnerControlTest {
     payment.setId("pay-2");
     payment.setNotifyUrl(null);
 
-    PaymentEvent event = new PaymentEvent(PaymentStatus.COMPLETED, payment, 1717000000000L);
+    PaymentEvent event = new PaymentEvent(payment, 1717000000000L);
 
     control.execute(event);
 
@@ -70,10 +71,77 @@ class NotifyPartnerControlTest {
     payment.setId("pay-3");
     payment.setNotifyUrl("   ");
 
-    PaymentEvent event = new PaymentEvent(PaymentStatus.COMPLETED, payment, 1717000000000L);
+    PaymentEvent event = new PaymentEvent(payment, 1717000000000L);
 
     control.execute(event);
 
     verify(httpClient, never()).post(anyString(), anyMap(), anyString());
+  }
+
+  @Test
+  void shouldSkipWhenPaymentNotTerminal() {
+    Payment payment = new Payment();
+    payment.setId("pay-init");
+    payment.setNotifyUrl("https://partner.example.com/webhook");
+    payment.setStatus(PaymentStatus.INITIATED);
+
+    PaymentEvent event = new PaymentEvent(payment, 0L);
+
+    control.execute(event);
+
+    verify(httpClient, never()).post(anyString(), anyMap(), anyString());
+  }
+
+  @Test
+  void shouldThrowPartnerNotificationExceptionOnServerError() {
+    Payment payment = new Payment();
+    payment.setId("pay-5xx");
+    payment.setNotifyUrl("https://partner.example.com/webhook");
+    payment.setStatus(PaymentStatus.COMPLETED);
+
+    PaymentEvent event = new PaymentEvent(payment, 0L);
+
+    HttpClient.Response response = new HttpClient.Response(503, "Service Unavailable");
+    when(httpClient.post(anyString(), anyMap(), anyString())).thenReturn(response);
+
+    PartnerNotificationException ex =
+        assertThrows(PartnerNotificationException.class, () -> control.execute(event));
+
+    assertEquals(503, ex.getStatusCode());
+  }
+
+  @Test
+  void shouldSkipOnClientError() {
+    Payment payment = new Payment();
+    payment.setId("pay-4xx");
+    payment.setNotifyUrl("https://partner.example.com/webhook");
+    payment.setStatus(PaymentStatus.COMPLETED);
+
+    PaymentEvent event = new PaymentEvent(payment, 0L);
+
+    HttpClient.Response response = new HttpClient.Response(404, "Not Found");
+    when(httpClient.post(anyString(), anyMap(), anyString())).thenReturn(response);
+
+    assertDoesNotThrow(() -> control.execute(event));
+  }
+
+  @Test
+  void shouldThrowPartnerNotificationExceptionOnNetworkError() {
+    Payment payment = new Payment();
+    payment.setId("pay-io");
+    payment.setNotifyUrl("https://partner.example.com/webhook");
+    payment.setStatus(PaymentStatus.COMPLETED);
+
+    PaymentEvent event = new PaymentEvent(payment, 0L);
+
+    doThrow(new RuntimeException("Connection timeout"))
+        .when(httpClient)
+        .post(anyString(), anyMap(), anyString());
+
+    PartnerNotificationException ex =
+        assertThrows(PartnerNotificationException.class, () -> control.execute(event));
+
+    assertEquals(0, ex.getStatusCode());
+    assertNotNull(ex.getCause());
   }
 }

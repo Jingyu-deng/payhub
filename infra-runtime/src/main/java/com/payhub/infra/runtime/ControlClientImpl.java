@@ -3,8 +3,7 @@ package com.payhub.infra.runtime;
 import com.payhub.core.controls.base.Control;
 import com.payhub.core.controls.base.ControlInjector;
 import com.payhub.core.controls.base.EventControl;
-import com.payhub.core.domain.PaymentEvent;
-import com.payhub.core.enums.PaymentStatus;
+import com.payhub.core.event.BaseEvent;
 import com.payhub.core.exception.ServiceNotFoundException;
 import com.payhub.core.infra.*;
 import java.util.List;
@@ -68,10 +67,9 @@ public class ControlClientImpl implements ControlClient {
 
   @Override
   @SuppressWarnings("unchecked")
-  public List<EventControl<PaymentEvent>> getEventControls(PaymentStatus eventType) {
+  public List<EventControl<BaseEvent>> getEventControls() {
     Map<String, EventControl> allControls = applicationContext.getBeansOfType(EventControl.class);
     return allControls.values().stream()
-        .filter(ec -> ec.getHandledEventType() == eventType)
         .peek(
             ec -> {
               if (ec instanceof ControlInjector<?, ?> injector) {
@@ -84,7 +82,7 @@ public class ControlClientImpl implements ControlClient {
                 injector.setHttpClient(httpClient);
               }
             })
-        .map(ec -> (EventControl<PaymentEvent>) ec)
+        .map(ec -> (EventControl<BaseEvent>) ec)
         .toList();
   }
 }

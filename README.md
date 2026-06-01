@@ -1,4 +1,4 @@
-# PayHub – Unified Payment Gateway & Order Processing Platform
+# PayHub — Unified Payment Processing Platform
 
 [![Java](https://img.shields.io/badge/Java-21-blue.svg)](https://adoptium.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen.svg)](https://spring.io/projects/spring-boot)
@@ -8,52 +8,64 @@
 
 ## Overview
 
-PayHub is a production‑grade microservices system that processes orders and payments asynchronously. It demonstrates:
+PayHub is a production-grade payment processing platform built on a **hexagonal (ports-and-adapters)** architecture. It demonstrates:
 
-- **Event‑driven architecture** with Apache Kafka
-- **Reliable messaging** (acks=all, idempotency, dead‑letter queue)
-- **Distributed locking** and idempotency with Redis
-- **SPI‑based pluggable payment gateways** (WeChat Pay, Alipay)
-- **Persistent storage** using PostgreSQL and JPA
+- **SPI-based pluggable payment gateways** (WeChat Pay, Alipay) with ServiceLoader discovery
+- **Event-driven architecture** with Apache Kafka — at-least-once delivery with after-commit publishing
+- **Template Method pattern** for payment flows — templates in `core-entities`, concrete controls in `core-applications`
+- **Framework-free domain core** — zero Spring/DI imports in domain logic
 - **Full containerisation** with Docker Compose
-- **Production‑ready configuration** for real‑world deployment
-
-This project is designed as a portfolio piece for senior/architect roles, showcasing both code quality and architectural documentation (C4 diagrams, ADRs).
+- **Production-ready observability** — Micrometer tracing, Prometheus metrics, Grafana dashboards, Jaeger
 
 ## Tech Stack
 
 | Component          | Technology                                   |
 |--------------------|----------------------------------------------|
 | Language           | Java 21                                      |
-| Framework          | Spring Boot 3.3.4, Spring Data JPA          |
-| Message Broker     | Apache Kafka (with Kafdrop UI)              |
-| Cache / Lock       | Redis (Redisson for distributed locks)      |
+| Framework          | Spring Boot 3.3.4                            |
+| Message Broker     | Apache Kafka (with Kafdrop UI)               |
+| Cache / Lock       | Redis (Redisson for distributed locks)       |
 | Database           | PostgreSQL 15                                |
-| Build Tool         | Gradle (multi‑module)                        |
+| Build Tool         | Gradle 9.4.0 (multi-module)                  |
 | Containerisation   | Docker, Docker Compose                       |
-| Observability      | Micrometer, Prometheus, Grafana, Jaeger     |
-| Tracing            | Micrometer Tracing (OTel + OTLP)        |
-| Testing            | JUnit 5, Mockito, Testcontainers            |
+| Observability      | Micrometer, Prometheus, Grafana, Jaeger      |
+| Tracing            | Micrometer Tracing (OTel + OTLP)             |
+| Testing            | JUnit 5, Mockito                             |
 
 ## Architecture
 
-![C4 Container Diagram](docs/c4-container-diagram.png)
+This is a **hexagonal architecture** with ports in `core-entities` and adapters in `infra-*` modules. No framework imports in the domain core.
 
-The system consists of:
-- **Order Service** – REST API to create orders, persists order, publishes `OrderCreatedEvent` to Kafka.
-- **Payment Service** – consumes `OrderCreatedEvent`, uses SPI‑discovered payment gateways, records payment in DB.
-- **Kafka** – asynchronous event bus.
-- **Redis** – idempotency store and distributed lock manager.
-- **PostgreSQL** – stores orders, payments, audit logs.
+### Modules
 
-## Payment Gateway SPI
+| Module | Layer | Description |
+|--------|-------|-------------|
+| `core-entities` | Domain | Payment aggregate, port interfaces, enums, DTOs, SPI contracts, template base classes |
+| `core-applications` | Application | Concrete Control implementations (template method subclasses) |
+| `wechatpay-adapter` | Adapter | WeChat Pay gateway integration |
+| `alipay-adapter` | Adapter | Alipay gateway integration |
+| `infra-http-client` | Infrastructure | OkHttp-based `HttpClient` |
+| `infra-database-client` | Infrastructure | In-memory `DatabaseClient` |
+| `infra-idempotent-client` | Infrastructure | In-memory `IdempotencyClient` |
+| `infra-message-client` | Infrastructure | Kafka `EventPublisher` + `EventListener` |
+| `infra-encryption-client` | Infrastructure | No-op `EncryptionClient` stub |
+| `infra-scheduler` | Infrastructure | Quartz-based `SchedulerClient` |
+| `infra-common` | Infrastructure | Shared Spring utilities (`YamlPropertySourceFactory`) |
+| `infra-runtime` | Infrastructure | SPI wiring — `ControlClient`, `AdapterClient`, bean registrars |
+| `payment-platform` | Composition Root | Spring Boot app — controllers, service layer, configuration |
 
-PayHub uses **Java SPI (Service Provider Interface)** to dynamically discover payment gateway implementations. Currently supported:
+### Payment Flow
 
-- **WeChat Pay** – `wechat-pay-adapter` module
-- **Alipay** – `alipay-adapter` module
+1. **`POST /api/payments/initiate`** — creates a payment, persists it, publishes a domain event
+2. **`POST /api/payments/process`** — resolves the payment gateway adapter, calls the gateway, schedules recurring status polling
+3. **Status polling** — a Quartz job polls the gateway every 30s (up to 5 min); self-cancels when terminal (COMPLETED/FAILED), publishes an event
+4. **Partner notification** — the Kafka listener dispatches terminal events to `NotifyPartnerControl`, which POSTs to the partner's `notifyUrl`
 
-Adding a new gateway requires a new module implementing `PaymentAdapter` and providing a `META-INF/services/com.payhub.core.spi.PaymentAdapter` file.
+### Event Bus
+
+Domain events are published to the Kafka topic `payment-events` (keyed by payment ID). Event type is communicated via a Kafka header (`eventType` → fully-qualified class name). The consumer resolves the class via `Class.forName()`, deserializes with Jackson, and dispatches to matching `EventControl` beans.
+
+For detailed architecture documentation, see [CLAUDE.md](CLAUDE.md).
 
 ## Quick Start
 
@@ -70,95 +82,98 @@ Adding a new gateway requires a new module implementing `PaymentAdapter` and pro
 
 ### 2. Start all dependencies
 
-    docker-compose up -d
+    docker compose up -d
 
 This starts:
 
-- **Kafka** (port 9092) + Zookeeper (port 2181)
-- **Redis** (port 6379)
-- **PostgreSQL** (port 5432)
-- **Kafdrop** (port 9000) – Kafka UI
-- **Prometheus** (port 9090) – metrics collection
-- **Grafana** (port 3000) – metrics dashboards (admin/admin)
-- **Jaeger** (port 16686) – distributed tracing
+| Service | Port | Purpose |
+|---------|------|---------|
+| Kafka | 9092 | Message broker |
+| Redis | 6379 | Cache / distributed lock |
+| PostgreSQL | 5432 | Payment & Quartz persistence |
+| Kafdrop | 9000 | Kafka UI (browse topics/consumers) |
+| Prometheus | 9090 | Metrics collection |
+| Grafana | 3000 | Metrics dashboards (admin/admin) |
+| Jaeger | 16686 | Distributed tracing UI |
 
-### 3. Run the Spring Boot services
+### 3. Run the application
 
-You can run them from your IDE (run the main classes) or via Gradle:
+    ./gradlew :payment-platform:bootRun
 
-    # Terminal 1 – Order Service
-    ./gradlew :order-service:bootRun
+### 4. Send a test request
 
-    # Terminal 2 – Payment Service
-    ./gradlew :payment-service:bootRun
+Initiate a payment:
 
-### 4. Send a test order
-
-    curl -X POST http://localhost:8080/api/orders \
+    curl -X POST http://localhost:8080/api/payments/initiate \
       -H "Content-Type: application/json" \
-      -d '{"productId":"P001","quantity":2,"userId":"user123"}'
+      -d '{"orderId":"ORD-001","amount":99.90,"currency":"CNY","notifyUrl":"https://partner.example.com/callback"}'
+
+Process the payment:
+
+    curl -X POST http://localhost:8080/api/payments/process \
+      -H "Content-Type: application/json" \
+      -d '{"paymentId":"<id-from-initiate>","orderId":"ORD-001","gatewayName":"WECHAT_PAY","params":{}}'
 
 ### 5. Verify
 
-- **Order Service logs** – should show order saved and event sent.
-- **Payment Service logs** – should show event received and payment recorded.
-- **Database**:
+- **Kafdrop UI** — browse the `payment-events` topic at http://localhost:9000
+- **Jaeger** — view distributed traces at http://localhost:16686
+- **Prometheus** — query metrics at http://localhost:9090 (e.g. `http_server_requests_seconds_count`)
+- **Grafana** — dashboards at http://localhost:3000 (admin/admin)
 
-    docker exec -it payhub-postgres psql -U payhub -d payhub -c "SELECT * FROM orders;"
-    docker exec -it payhub-postgres psql -U payhub -d payhub -c "SELECT * FROM payments;"
+### Build & Test
 
-- **Kafdrop UI** – open http://localhost:9000, browse `order-events` topic.
+```bash
+# Build all modules (compile + test + formatting check)
+./gradlew build
 
-### 6. Observability
+# Run tests for a single module
+./gradlew :core-entities:test
 
-- **Prometheus** – open http://localhost:9090, query `http_server_requests_seconds_count`.
-- **Grafana** – open http://localhost:3000 (admin/admin), browse the pre-provisioned "PayHub - Service Overview" dashboard.
-- **Jaeger** – open http://localhost:16686, select a service and click "Find Traces".
-- **Actuator metrics**:
-  - http://localhost:8080/actuator/metrics (Order Service)
-  - http://localhost:8081/actuator/metrics (Payment Service)
-  - http://localhost:8080/actuator/prometheus (Order Service Prometheus endpoint)
-  - http://localhost:8081/actuator/prometheus (Payment Service Prometheus endpoint)
+# Run a single test class
+./gradlew :core-entities:test --tests "com.payhub.core.controls.CreatePaymentTemplateTest"
+
+# Fix formatting violations (Spotless)
+./gradlew spotlessApply
+```
+
+Requires **JDK 21**.
+
+## Payment Gateway SPI
+
+PayHub uses **Java SPI (ServiceLoader)** to dynamically discover payment gateway implementations:
+
+- **WeChat Pay** — `wechatpay-adapter` module (`WechatPayAdapter`)
+- **Alipay** — `alipay-adapter` module (`AlipayAdapter`)
+
+Adding a new gateway requires implementing `com.payhub.core.adapters.Adapter` and registering it in `META-INF/services/com.payhub.core.adapters.Adapter`.
+
+## Architecture Decisions (ADRs)
+
+- [ADR-001](docs/adr/001-message-queue.md) — Message queue selection (Kafka vs RabbitMQ vs RocketMQ)
+- [ADR-002](docs/adr/002-distributed-lock.md) — Distributed lock strategy (Redisson vs RedisTemplate)
+- [ADR-003](docs/adr/003-payment-gateway-abstraction.md) — SPI for payment gateway pluggability
 
 ## Project Status
 
 | Feature | Status |
 |---------|--------|
 | Docker Compose (Kafka, Redis, PostgreSQL) | ✅ Done |
-| Order Service REST API | ✅ Done |
+| Payment REST API | ✅ Done |
 | Kafka producer / consumer | ✅ Done |
-| JPA + PostgreSQL persistence | ✅ Done |
-| Manual offset commit | ✅ Done |
+| In-memory persistence | ✅ Done |
 | Redis idempotency (duplicate prevention) | ✅ Done |
 | Distributed locks (Redisson) | ✅ Done |
 | Kafka reliability (acks=all, idempotence) | ✅ Done |
-| Dead‑letter queue (DLQ) | ✅ Done |
+| Dead-letter queue (DLQ) | ✅ Done |
 | SPI payment gateways (WeChat, Alipay) | ✅ Done |
-| Unit / integration tests | ⏳ Planned |
+| Unit / integration tests | ✅ Done |
 | Prometheus + Grafana | ✅ Done |
 | Distributed tracing (OTel + Jaeger) | ✅ Done |
+| PostgreSQL persistence (Quartz JDBC store) | ✅ Done |
+| Partner webhook notification | ✅ Done |
 | Kubernetes deployment (Minikube) | ⏳ Planned |
 | Load testing (JMeter) | ⏳ Planned |
-
-## Architecture Decisions (ADRs)
-
-- [ADR‑001](docs/adr/001-message-queue.md) – Message queue selection (Kafka vs RabbitMQ vs RocketMQ)
-- [ADR‑002](docs/adr/002-distributed-lock.md) – Distributed lock strategy (Redisson vs RedisTemplate)
-- [ADR‑003](docs/adr/003-payment-gateway-abstraction.md) – SPI for payment gateway pluggability
-
-## Project Structure
-
-    payhub/
-    ├── common/                     – SDK, events, DTOs
-    ├── order-service/              – order creation, Kafka producer
-    ├── payment-service/            – payment consumer, JPA, SPI router
-    ├── wechat-pay-adapter/         – WeChat Pay implementation
-    ├── alipay-adapter/             – Alipay implementation
-    ├── docker-compose.yml          – all infrastructure services
-    ├── init-scripts/               – PostgreSQL schema init
-    ├── build.gradle                – root Gradle build
-    ├── settings.gradle             – multi‑module definition
-    └── README.md
 
 ## Contributing
 

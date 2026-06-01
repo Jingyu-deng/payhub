@@ -1,8 +1,5 @@
 spring:
   datasource:
-    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/payhub}
-    username: ${DATASOURCE_USERNAME:payhub}
-    password: ${DATASOURCE_PASSWORD:payhub123}
     driver-class-name: org.postgresql.Driver
   quartz:
     job-store-type: jdbc

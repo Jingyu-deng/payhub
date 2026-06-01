@@ -67,8 +67,8 @@ class CheckPaymentStatusTemplateTest {
     ArgumentCaptor<PaymentEvent> captor = ArgumentCaptor.forClass(PaymentEvent.class);
     verify(eventPublisher).publish(captor.capture());
     PaymentEvent published = captor.getValue();
-    assertEquals(PaymentStatus.COMPLETED, published.getType());
     assertEquals("pay-1", published.getPayment().getId());
+    assertEquals(PaymentStatus.COMPLETED, published.getPayment().getStatus());
     assertEquals("https://partner.example.com/webhook", published.getPayment().getNotifyUrl());
   }
 
@@ -97,7 +97,7 @@ class CheckPaymentStatusTemplateTest {
 
     ArgumentCaptor<PaymentEvent> captor = ArgumentCaptor.forClass(PaymentEvent.class);
     verify(eventPublisher).publish(captor.capture());
-    assertEquals(PaymentStatus.FAILED, captor.getValue().getType());
+    assertEquals(PaymentStatus.FAILED, captor.getValue().getPayment().getStatus());
   }
 
   @Test

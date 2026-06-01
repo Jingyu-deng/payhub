@@ -1,6 +1,6 @@
 package com.payhub.core.infra;
 
-import com.payhub.core.domain.PaymentEvent;
+import com.payhub.core.event.BaseEvent;
 
 /**
  * Infrastructure interface for publishing domain events. Implementations live in the infra module
@@ -8,5 +8,5 @@ import com.payhub.core.domain.PaymentEvent;
  */
 public interface EventPublisher {
 
-  void publish(PaymentEvent event);
+  void publish(BaseEvent event);
 }

@@ -1,11 +1,21 @@
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
     consumer:
-      group-id: payhub-consumer
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: com.payhub.infra.message.serde.EncryptingValueDeserializer
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: com.payhub.infra.message.serde.EncryptingValueSerializer
+
+payhub:
+  kafka:
+    consumer:
+      retry:
+        initial-interval-ms: 1000
+        multiplier: 2.0
+        max-interval-ms: 60000
+        max-elapsed-time-ms: 31000
+        not-retryable-exceptions:
+          - com.payhub.infra.message.exception.MissingHeaderException
+          - com.payhub.infra.message.exception.UnknownEventTypeException

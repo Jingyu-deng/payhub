@@ -2,8 +2,7 @@ package com.payhub.core.infra;
 
 import com.payhub.core.controls.base.Control;
 import com.payhub.core.controls.base.EventControl;
-import com.payhub.core.domain.PaymentEvent;
-import com.payhub.core.enums.PaymentStatus;
+import com.payhub.core.event.BaseEvent;
 import java.util.List;
 
 /**
@@ -16,5 +15,6 @@ public interface ControlClient {
 
   <T extends Control<?, ?>> T getControl(Class<T> controlType);
 
-  List<EventControl<PaymentEvent>> getEventControls(PaymentStatus eventType);
+  /** Returns all registered {@link EventControl} beans, fully wired. */
+  List<EventControl<BaseEvent>> getEventControls();
 }

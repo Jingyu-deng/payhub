@@ -7,6 +7,7 @@ import static com.payhub.infra.scheduler.ControlJob.KEY_REQUEST_TYPE;
 import static com.payhub.infra.scheduler.ControlJob.KEY_SCHEDULED_AT_MS;
 
 import com.payhub.core.controls.base.Control;
+import com.payhub.core.exception.JobSchedulingException;
 import com.payhub.core.infra.SchedulerClient;
 import com.payhub.core.utils.JsonUtils;
 import java.time.Duration;
@@ -67,7 +68,7 @@ public class SchedulerClientImpl implements SchedulerClient {
           maxDuration.toMillis());
       return jobId;
     } catch (SchedulerException e) {
-      throw new RuntimeException("Failed to schedule recurring job: " + jobId, e);
+      throw new JobSchedulingException("Failed to schedule recurring job: " + jobId, e);
     }
   }
 
@@ -94,7 +95,7 @@ public class SchedulerClientImpl implements SchedulerClient {
           delay.toMillis());
       return jobId;
     } catch (SchedulerException e) {
-      throw new RuntimeException("Failed to schedule one-shot job: " + jobId, e);
+      throw new JobSchedulingException("Failed to schedule one-shot job: " + jobId, e);
     }
   }
 
@@ -104,7 +105,7 @@ public class SchedulerClientImpl implements SchedulerClient {
       boolean deleted = quartz.deleteJob(JobKey.jobKey(jobKey));
       log.info("Cancelled job {}: deleted={}", jobKey, deleted);
     } catch (SchedulerException e) {
-      throw new RuntimeException("Failed to cancel job: " + jobKey, e);
+      throw new JobSchedulingException("Failed to cancel job: " + jobKey, e);
     }
   }
 

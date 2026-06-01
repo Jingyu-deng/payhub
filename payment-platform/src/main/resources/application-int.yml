@@ -1,0 +1,7 @@
+spring:
+  kafka:
+    bootstrap-servers: int-kafka-broker:9092
+  datasource:
+    url: jdbc:postgresql://int-postgres:5432/payhub
+    username: payhub
+    password: ${INT_DATASOURCE_PASSWORD}

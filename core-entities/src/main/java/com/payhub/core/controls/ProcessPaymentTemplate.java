@@ -61,12 +61,12 @@ public abstract class ProcessPaymentTemplate
 
       if (result.isSuccess()) {
         payment.setStatus(PaymentStatus.PROCESSING);
-        idempotencyClient.markAsProcessed(idempotencyKey);
 
-        eventPublisher.publish(
-            new PaymentEvent(PaymentStatus.PROCESSING, payment, System.currentTimeMillis()));
+        eventPublisher.publish(new PaymentEvent(payment, System.currentTimeMillis()));
 
         afterPaymentProcessed(payment);
+
+        idempotencyClient.markAsProcessed(idempotencyKey);
 
       } else {
         payment.setStatus(PaymentStatus.FAILED);

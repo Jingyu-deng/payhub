@@ -4,8 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.payhub.core.controls.base.EventControl;
-import com.payhub.core.domain.PaymentEvent;
-import com.payhub.core.enums.PaymentStatus;
+import com.payhub.core.event.BaseEvent;
 import com.payhub.core.infra.*;
 import java.util.List;
 import java.util.Map;
@@ -35,34 +34,26 @@ class ControlClientImplTest {
 
   @Test
   @SuppressWarnings({"unchecked", "rawtypes"})
-  void shouldReturnEventControlsMatchingEventType() {
-    EventControl completedControl = mock(EventControl.class);
-    when(completedControl.getHandledEventType()).thenReturn(PaymentStatus.COMPLETED);
+  void shouldReturnAllEventControls() {
+    EventControl control1 = mock(EventControl.class);
+    EventControl control2 = mock(EventControl.class);
 
-    EventControl initiatedControl = mock(EventControl.class);
-    when(initiatedControl.getHandledEventType()).thenReturn(PaymentStatus.INITIATED);
-
-    Map<String, EventControl> beans = Map.of("c1", completedControl, "c2", initiatedControl);
+    Map<String, EventControl> beans = Map.of("c1", control1, "c2", control2);
     when(applicationContext.getBeansOfType(EventControl.class)).thenReturn((Map) beans);
 
-    List<EventControl<PaymentEvent>> result =
-        controlClient.getEventControls(PaymentStatus.COMPLETED);
+    List<EventControl<BaseEvent>> result = controlClient.getEventControls();
 
-    assertEquals(1, result.size());
-    assertEquals(completedControl, result.get(0));
+    assertEquals(2, result.size());
+    assertTrue(result.contains(control1));
+    assertTrue(result.contains(control2));
   }
 
   @Test
   @SuppressWarnings({"unchecked", "rawtypes"})
-  void shouldReturnEmptyListWhenNoMatch() {
-    EventControl control = mock(EventControl.class);
-    when(control.getHandledEventType()).thenReturn(PaymentStatus.COMPLETED);
+  void shouldReturnEmptyListWhenNoControlsRegistered() {
+    when(applicationContext.getBeansOfType(EventControl.class)).thenReturn(Map.of());
 
-    when(applicationContext.getBeansOfType(EventControl.class))
-        .thenReturn((Map) Map.of("c1", control));
-
-    List<EventControl<PaymentEvent>> result =
-        controlClient.getEventControls(PaymentStatus.INITIATED);
+    List<EventControl<BaseEvent>> result = controlClient.getEventControls();
 
     assertTrue(result.isEmpty());
   }
