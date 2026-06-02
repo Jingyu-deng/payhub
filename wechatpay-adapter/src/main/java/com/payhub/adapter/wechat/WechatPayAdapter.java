@@ -1,5 +1,7 @@
 package com.payhub.adapter.wechat;
 
+import com.payhub.adapter.wechat.dto.WechatPayPaymentRequest;
+import com.payhub.adapter.wechat.dto.WechatPayRefundRequest;
 import com.payhub.core.adapters.Adapter;
 import com.payhub.core.adapters.AdapterInjector;
 import com.payhub.core.domain.PaymentResult;
@@ -16,17 +18,29 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class WechatPayAdapter extends AdapterInjector implements Adapter {
 
+  private static final String BASE_URL = "https://api.mch.weixin.qq.com";
+
+  private volatile WechatPayApi wechatPayApi;
+
+  private WechatPayApi getWechatPayApi() {
+    if (wechatPayApi == null) {
+      synchronized (this) {
+        if (wechatPayApi == null) {
+          wechatPayApi = httpClient.createHttpApi(WechatPayApi.class, BASE_URL);
+        }
+      }
+    }
+    return wechatPayApi;
+  }
+
   @Override
   public PaymentResult processPayment(
       String orderId, BigDecimal amount, Currency currency, Map<String, String> params) {
-    log.info("WeChat Pay processing: orderId=" + orderId + ", amount=" + amount + " " + currency);
+    log.info("WeChat Pay processing: orderId={}, amount={} {}", orderId, amount, currency);
 
-    var response =
-        getHttpClient()
-            .post(
-                "https://api.mch.weixin.qq.com/pay/unifiedorder",
-                Map.of("Content-Type", "application/json"),
-                "{\"orderId\":\"" + orderId + "\",\"amount\":\"" + amount + "\"}");
+    var request = new WechatPayPaymentRequest().setOrderId(orderId).setAmount(amount.toString());
+
+    var response = getWechatPayApi().processPayment(request);
 
     if (response.is2xx()) {
       return new PaymentResult(
@@ -34,7 +48,7 @@ public class WechatPayAdapter extends AdapterInjector implements Adapter {
           "wx_" + UUID.randomUUID().toString().substring(0, 16),
           "Payment processed",
           response.getBody(),
-          "https://api.mch.weixin.qq.com/pay/unifiedorder?orderId=" + orderId);
+          BASE_URL + "/pay/unifiedorder?orderId=" + orderId);
     }
     return new PaymentResult(
         false, null, "WeChat Pay API returned " + response.getStatusCode(), null, null);
@@ -42,14 +56,12 @@ public class WechatPayAdapter extends AdapterInjector implements Adapter {
 
   @Override
   public RefundResult refund(String transactionId, BigDecimal amount) {
-    log.info("WeChat Pay refund: transactionId=" + transactionId + ", amount=" + amount);
+    log.info("WeChat Pay refund: transactionId={}, amount={}", transactionId, amount);
 
-    var response =
-        getHttpClient()
-            .post(
-                "https://api.mch.weixin.qq.com/secapi/pay/refund",
-                Map.of("Content-Type", "application/json"),
-                "{\"transactionId\":\"" + transactionId + "\",\"amount\":\"" + amount + "\"}");
+    var request =
+        new WechatPayRefundRequest().setTransactionId(transactionId).setAmount(amount.toString());
+
+    var response = getWechatPayApi().refund(request);
 
     if (response.is2xx()) {
       return new RefundResult(
@@ -66,13 +78,9 @@ public class WechatPayAdapter extends AdapterInjector implements Adapter {
 
   @Override
   public PaymentStatusResult checkPaymentStatus(String transactionId) {
-    log.info("WeChat Pay status check: transactionId=" + transactionId);
+    log.info("WeChat Pay status check: transactionId={}", transactionId);
 
-    var response =
-        getHttpClient()
-            .get(
-                "https://api.mch.weixin.qq.com/pay/orderquery?transactionId=" + transactionId,
-                Map.of("Content-Type", "application/json"));
+    var response = getWechatPayApi().checkPaymentStatus(transactionId);
 
     if (response.is2xx()) {
       return new PaymentStatusResult(PaymentStatus.COMPLETED, response.getBody());

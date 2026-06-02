@@ -1,17 +1,27 @@
 package com.payhub.core.infra;
 
-import java.util.Map;
-
 /**
- * Infrastructure interface for HTTP calls to payment gateways. Implementations live in the infra
- * module (OkHttp, RestTemplate, etc.).
+ * Infrastructure port for declarative HTTP calls. Adapters and controls define annotated interfaces
+ * describing an HTTP API contract, then call {@link #createHttpApi(Class, String)} to obtain a
+ * dynamic proxy that turns method invocations into real HTTP requests.
+ *
+ * <p>Implementations live in the infra module (e.g. {@code infra-http-client} via OkHttp).
  */
 public interface HttpClient {
 
-  Response post(String url, Map<String, String> headers, String body);
+  /**
+   * Creates a dynamic proxy that implements {@code apiInterface}. Each annotated method on the
+   * interface becomes an HTTP call whose URL is {@code baseUrl + path}. Annotations are read from
+   * {@code com.payhub.core.http}.
+   *
+   * @param apiInterface annotated interface describing the HTTP API
+   * @param baseUrl protocol + host (e.g. {@code "https://openapi.alipay.com"})
+   * @param <T> the API interface type
+   * @return a proxy instance
+   */
+  <T> T createHttpApi(Class<T> apiInterface, String baseUrl);
 
-  Response get(String url, Map<String, String> headers);
-
+  /** HTTP response value object. */
   class Response {
     private final int statusCode;
     private final String body;

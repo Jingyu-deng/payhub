@@ -1,0 +1,25 @@
+### Variables
+@baseUrl = http://localhost:8080
+
+### Initiate Payment
+# Creates a new payment and returns a redirect URL to the payment method selection page.
+POST {{baseUrl}}/api/payments/initiate
+Content-Type: application/json
+
+{
+  "orderId": "ORD-20260601-001",
+  "amount": 99.99,
+  "currency": "CNY",
+  "notifyUrl": "https://17b720d1-11b7-4920-ae86-e514800370b4.webhook.site"
+}
+
+### Initiate Payment (USD)
+POST {{baseUrl}}/api/payments/initiate
+Content-Type: application/json
+
+{
+  "orderId": "ORD-20260601-002",
+  "amount": 15.50,
+  "currency": "USD",
+  "notifyUrl": "https://partner.example.com/webhook/payment"
+}

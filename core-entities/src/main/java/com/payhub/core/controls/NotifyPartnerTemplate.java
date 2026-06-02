@@ -4,14 +4,14 @@ import com.payhub.core.controls.base.EventControl;
 import com.payhub.core.domain.Payment;
 import com.payhub.core.domain.PaymentEvent;
 import com.payhub.core.exception.PartnerNotificationException;
+import com.payhub.core.http.DynamicHttpApi;
 import com.payhub.core.infra.HttpClient;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Template for notifying a partner via their webhook URL when a payment reaches a terminal state.
  * Extracts the notify URL from the event, builds the notification body, and delivers it via HTTP
- * POST.
+ * POST through a declarative {@link DynamicHttpApi} proxy.
  *
  * <p>On retryable failures (5xx, network errors) throws {@link PartnerNotificationException} so the
  * Kafka consumer retries with exponential backoff. Non-retryable failures (4xx) are logged and
@@ -36,7 +36,8 @@ public abstract class NotifyPartnerTemplate extends EventControl<PaymentEvent> {
 
     HttpClient.Response response;
     try {
-      response = httpClient.post(notifyUrl, Map.of("Content-Type", "application/json"), body);
+      DynamicHttpApi api = httpClient.createHttpApi(DynamicHttpApi.class, notifyUrl);
+      response = api.post(body);
     } catch (Exception e) {
       throw new PartnerNotificationException(notifyUrl, e);
     }

@@ -1,0 +1,32 @@
+# Gradle build cache & output
+.gradle/
+build/
+*/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Docker
+docker-compose.yml
+Dockerfile*
+.dockerignore
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docs & plans
+docs/
+*.md
+!README.md
+
+# HTTP test files
+http/
+
+# Secrets / env
+*.env
+*.key

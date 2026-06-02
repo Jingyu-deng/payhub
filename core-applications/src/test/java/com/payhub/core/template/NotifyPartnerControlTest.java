@@ -7,19 +7,21 @@ import com.payhub.core.domain.Payment;
 import com.payhub.core.domain.PaymentEvent;
 import com.payhub.core.enums.PaymentStatus;
 import com.payhub.core.exception.PartnerNotificationException;
+import com.payhub.core.http.DynamicHttpApi;
 import com.payhub.core.infra.HttpClient;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class NotifyPartnerControlTest {
 
   private HttpClient httpClient;
+  private DynamicHttpApi mockApi;
   private NotifyPartnerControl control;
 
   @BeforeEach
   void setUp() {
     httpClient = mock(HttpClient.class);
+    mockApi = mock(DynamicHttpApi.class);
     control = new NotifyPartnerControl();
     control.setHttpClient(httpClient);
   }
@@ -40,16 +42,13 @@ class NotifyPartnerControlTest {
     PaymentEvent event = new PaymentEvent(payment, 1717000000000L);
 
     HttpClient.Response response = new HttpClient.Response(200, "OK");
-    when(httpClient.post(eq("https://partner.example.com/webhook"), anyMap(), anyString()))
-        .thenReturn(response);
+    when(httpClient.createHttpApi(DynamicHttpApi.class, "https://partner.example.com/webhook"))
+        .thenReturn(mockApi);
+    when(mockApi.post(anyString())).thenReturn(response);
 
     control.execute(event);
 
-    verify(httpClient)
-        .post(
-            eq("https://partner.example.com/webhook"),
-            eq(Map.of("Content-Type", "application/json")),
-            anyString());
+    verify(mockApi).post(anyString());
   }
 
   @Test
@@ -62,7 +61,7 @@ class NotifyPartnerControlTest {
 
     control.execute(event);
 
-    verify(httpClient, never()).post(anyString(), anyMap(), anyString());
+    verify(httpClient, never()).createHttpApi(any(), anyString());
   }
 
   @Test
@@ -75,7 +74,7 @@ class NotifyPartnerControlTest {
 
     control.execute(event);
 
-    verify(httpClient, never()).post(anyString(), anyMap(), anyString());
+    verify(httpClient, never()).createHttpApi(any(), anyString());
   }
 
   @Test
@@ -89,7 +88,7 @@ class NotifyPartnerControlTest {
 
     control.execute(event);
 
-    verify(httpClient, never()).post(anyString(), anyMap(), anyString());
+    verify(httpClient, never()).createHttpApi(any(), anyString());
   }
 
   @Test
@@ -102,7 +101,8 @@ class NotifyPartnerControlTest {
     PaymentEvent event = new PaymentEvent(payment, 0L);
 
     HttpClient.Response response = new HttpClient.Response(503, "Service Unavailable");
-    when(httpClient.post(anyString(), anyMap(), anyString())).thenReturn(response);
+    when(httpClient.createHttpApi(any(), anyString())).thenReturn(mockApi);
+    when(mockApi.post(anyString())).thenReturn(response);
 
     PartnerNotificationException ex =
         assertThrows(PartnerNotificationException.class, () -> control.execute(event));
@@ -120,7 +120,8 @@ class NotifyPartnerControlTest {
     PaymentEvent event = new PaymentEvent(payment, 0L);
 
     HttpClient.Response response = new HttpClient.Response(404, "Not Found");
-    when(httpClient.post(anyString(), anyMap(), anyString())).thenReturn(response);
+    when(httpClient.createHttpApi(any(), anyString())).thenReturn(mockApi);
+    when(mockApi.post(anyString())).thenReturn(response);
 
     assertDoesNotThrow(() -> control.execute(event));
   }
@@ -134,9 +135,8 @@ class NotifyPartnerControlTest {
 
     PaymentEvent event = new PaymentEvent(payment, 0L);
 
-    doThrow(new RuntimeException("Connection timeout"))
-        .when(httpClient)
-        .post(anyString(), anyMap(), anyString());
+    when(httpClient.createHttpApi(any(), anyString())).thenReturn(mockApi);
+    doThrow(new RuntimeException("Connection timeout")).when(mockApi).post(anyString());
 
     PartnerNotificationException ex =
         assertThrows(PartnerNotificationException.class, () -> control.execute(event));

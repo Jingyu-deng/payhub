@@ -6,6 +6,7 @@ apply plugin: 'org.springframework.boot'
 dependencies {
     implementation project(':infra-common')
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
 }
 
 bootJar.enabled = false
