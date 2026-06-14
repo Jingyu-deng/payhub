@@ -16,7 +16,8 @@ dependencies {
     implementation project(':infra-encryption-client')
     implementation project(':infra-message-client')
     implementation project(':infra-database-client')
-    implementation project(':infra-flyway')
+    // infra-flyway NOT included — migrations run standalone via
+    // ./gradlew :infra-flyway:migrate, not via Spring Boot auto-config.
     implementation project(':infra-idempotent-client')
     implementation project(':infra-scheduler')
     implementation project(':infra-runtime')

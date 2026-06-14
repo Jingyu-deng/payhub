@@ -1,23 +1,25 @@
 // infra-flyway :: Database schema migrations.
 //
-// Two ways to run:
-//   1. Standalone (Gradle): ./gradlew :infra-flyway:migrate
-//   2. Auto on startup:     Spring Boot runs migrations when the app starts
+// Run via Gradle:
+//   ./gradlew :infra-flyway:migrate
+//   ./gradlew :infra-flyway:flywayInfo
+//   ./gradlew :infra-flyway:flywayClean
+//   ./gradlew :infra-flyway:flywayBaseline
 //
 // Connection config in src/main/resources/flyway.conf.
 // Env vars FLYWAY_* (or ENV_DATASOURCE_*) override the conf file.
 // SQL files live in src/main/resources/db/.
 //
-// NOTE: We don't use the Flyway Gradle plugin. Flyway 10+ modularised database
-// support into separate plugins discovered via ServiceLoader. The Gradle plugin
-// runs inside Gradle's own classloader, which is isolated from project
-// dependencies — ServiceLoader can't find flyway-database-postgresql there.
-// FlywayRunner.java bridges this by running Flyway on the project classpath.
+// NOTE: This module runs Flyway standalone via FlywayRunner.java — it is NOT
+// on payment-platform's classpath, so Spring Boot FlywayAutoConfiguration
+// does not trigger. This avoids version conflicts: Spring Boot 3.3.4's
+// auto-config targets Flyway 10.x (which has JDK 21 JPMS issues), while
+// Flyway 12.x removed cleanOnValidationError() that Spring Boot calls.
 
 dependencies {
-    // Versions declared explicitly — this module has no Spring Boot BOM
-    implementation 'org.flywaydb:flyway-core:12.8.1'
-    implementation 'org.flywaydb:flyway-database-postgresql:12.8.1'
+    // Flyway 11.4.x — works with JDK 21, avoids Flyway 12.x Jackson shading bug
+    implementation 'org.flywaydb:flyway-core:11.4.1'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.4.1'
     implementation 'org.postgresql:postgresql:42.7.5'
 }
 

@@ -5,6 +5,9 @@ plugins {
     id 'com.diffplug.spotless' version '6.25.0' apply false
 }
 
+// Override Spring Boot BOM managed versions
+ext['flyway.version'] = '11.4.1'
+
 allprojects {
     group = 'com.payhub'
     version = '1.0.0'
