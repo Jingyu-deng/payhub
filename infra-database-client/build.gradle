@@ -1,11 +1,14 @@
 // infra-database-client :: DatabaseClient port implementation.
-// Provides persistence adapters (in-memory for dev, JPA for production).
+// Provides JPA persistence backed by PostgreSQL.
 
 apply plugin: 'org.springframework.boot'
 
 dependencies {
     implementation project(':infra-common')
-    implementation 'jakarta.persistence:jakarta.persistence-api'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql'
+    testImplementation 'com.h2database:h2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 bootJar.enabled = false

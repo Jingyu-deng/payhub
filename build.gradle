@@ -31,8 +31,8 @@ subprojects {
 
 }
 
-// Modules that can use framework dependencies (everything except core)
-configure(subprojects.findAll { !(it.name in ['core-entities', 'core-applications', 'alipay-adapter', 'wechatpay-adapter']) }) {
+// Modules that can use framework dependencies (everything except core adapters and infra-flyway)
+configure(subprojects.findAll { !(it.name in ['core-entities', 'core-applications', 'alipay-adapter', 'wechatpay-adapter', 'infra-flyway']) }) {
     dependencies {
         implementation 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'

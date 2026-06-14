@@ -1,8 +1,8 @@
 ### Variables
 @baseUrl = http://localhost:8080
 # Paste a paymentId from the initiate response here
-@paymentId = 3e7ca2af-0af2-4622-958e-244720616653
-@orderId = ORD-20260601-001
+@paymentId = fc365ea3-47c6-4a0d-8956-53517bc83d99
+@orderId = ORD-202606012-001
 
 ### Process Payment (WeChat Pay)
 # Processes the payment via the selected gateway. Requires a paymentId from the initiate step.

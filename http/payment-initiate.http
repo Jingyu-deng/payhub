@@ -7,7 +7,7 @@ POST {{baseUrl}}/api/payments/initiate
 Content-Type: application/json
 
 {
-  "orderId": "ORD-20260601-001",
+  "orderId": "ORD-202606012-001",
   "amount": 99.99,
   "currency": "CNY",
   "notifyUrl": "https://17b720d1-11b7-4920-ae86-e514800370b4.webhook.site"

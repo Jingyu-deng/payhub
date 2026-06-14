@@ -1,1 +1,2 @@
 com.payhub.infra.encryption.EncryptionClientImpl
+com.payhub.infra.encryption.config.EncryptionConfig

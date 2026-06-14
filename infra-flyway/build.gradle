@@ -1,0 +1,37 @@
+// infra-flyway :: Database schema migrations.
+//
+// Two ways to run:
+//   1. Standalone (Gradle): ./gradlew :infra-flyway:migrate
+//   2. Auto on startup:     Spring Boot runs migrations when the app starts
+//
+// Connection config in src/main/resources/flyway.conf.
+// Env vars FLYWAY_* (or ENV_DATASOURCE_*) override the conf file.
+// SQL files live in src/main/resources/db/.
+//
+// NOTE: We don't use the Flyway Gradle plugin. Flyway 10+ modularised database
+// support into separate plugins discovered via ServiceLoader. The Gradle plugin
+// runs inside Gradle's own classloader, which is isolated from project
+// dependencies — ServiceLoader can't find flyway-database-postgresql there.
+// FlywayRunner.java bridges this by running Flyway on the project classpath.
+
+dependencies {
+    // Versions declared explicitly — this module has no Spring Boot BOM
+    implementation 'org.flywaydb:flyway-core:12.8.1'
+    implementation 'org.flywaydb:flyway-database-postgresql:12.8.1'
+    implementation 'org.postgresql:postgresql:42.7.5'
+}
+
+def flywayTask(String command) {
+    tasks.register(command == 'migrate' ? command : "flyway${command.capitalize()}", JavaExec) {
+        group       = 'Flyway'
+        description = "Flyway ${command}"
+        classpath   = sourceSets.main.runtimeClasspath
+        mainClass   = 'com.payhub.infra.flyway.FlywayRunner'
+        args        = [command]
+    }
+}
+
+flywayTask('migrate')
+flywayTask('clean')
+flywayTask('info')
+flywayTask('baseline')

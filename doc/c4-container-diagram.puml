@@ -3,30 +3,26 @@
 
 title Container diagram for PayHub
 
-Person(customer, "Customer", "Submits orders")
+Person(customer, "Customer", "Initiates payments")
 
 System_Boundary(payhub, "PayHub") {
-    Container(order_service, "Order Service", "Spring Boot", "Handles order creation, publishes events")
-    Container(payment_service, "Payment Service", "Spring Boot", "Consumes events, processes payments")
-    ContainerDb(kafka, "Kafka", "Message Broker", "order-events topic")
-    ContainerDb(redis, "Redis", "Cache / Lock", "Caches product info, distributed locks")
-    ContainerDb(postgres, "PostgreSQL", "Database", "Stores orders, payments, audit logs")
+    Container(payment_platform, "Payment Platform", "Spring Boot", "Handles payment initiation, processing, status checks")
+    ContainerDb(kafka, "Kafka", "Message Broker", "payment-events topic")
+    ContainerDb(redis, "Redis", "Cache / Lock", "Idempotency locks, distributed locks")
+    ContainerDb(postgres, "PostgreSQL", "Database", "Stores payments and audit logs (Flyway migrations)")
     System_Ext(payment_gateway, "Payment Gateway", "External API for payment processing")
     ContainerDb(prometheus, "Prometheus", "Time Series DB", "Metrics collection & querying")
     ContainerDb(jaeger, "Jaeger", "Tracing Server", "Distributed trace storage & query")
     Container(grafana, "Grafana", "Dashboard", "Metrics & tracing visualization")
 }
 
-Rel(customer, order_service, "POST /api/orders")
-Rel(order_service, kafka, "Produces to order-events")
-Rel(kafka, payment_service, "Consumes from order-events")
-Rel(payment_service, redis, "Reads/Writes")
-Rel(payment_service, postgres, "Reads/Writes")
-Rel(payment_service, payment_gateway, "Calls to process payment")
-Rel(order_service, prometheus, "Exposes metrics (actuator)")
-Rel(payment_service, prometheus, "Exposes metrics (actuator)")
-Rel(order_service, jaeger, "Sends traces (OTLP)")
-Rel(payment_service, jaeger, "Sends traces (OTLP)")
+Rel(customer, payment_platform, "POST /api/payments")
+Rel(payment_platform, kafka, "Publishes/Consumes events")
+Rel(payment_platform, redis, "Reads/Writes")
+Rel(payment_platform, postgres, "Reads/Writes (Flyway-managed schema)")
+Rel(payment_platform, payment_gateway, "Calls to process payment")
+Rel(payment_platform, prometheus, "Exposes metrics (actuator)")
+Rel(payment_platform, jaeger, "Sends traces (OTLP)")
 Rel(grafana, prometheus, "Queries metrics")
 
 @enduml

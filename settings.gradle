@@ -9,6 +9,7 @@ include 'infra-http-client'      // OkHttp adapter (depends on core-entities)
 include 'infra-encryption-client' // EncryptionClient port implementation (depends on core-entities)
 include 'infra-message-client'   // Kafka event publisher (depends on core-entities)
 include 'infra-database-client'  // DatabaseClient port implementation (depends on core-entities)
+include 'infra-flyway'           // Flyway schema migrations (separate concern)
 include 'infra-idempotent-client' // IdempotencyClient port implementation (depends on core-entities)
 include 'infra-common'           // Shared Spring utilities for infra modules
 include 'infra-scheduler'        // SchedulerClient port implementation (depends on core-entities)

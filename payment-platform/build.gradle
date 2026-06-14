@@ -16,6 +16,7 @@ dependencies {
     implementation project(':infra-encryption-client')
     implementation project(':infra-message-client')
     implementation project(':infra-database-client')
+    implementation project(':infra-flyway')
     implementation project(':infra-idempotent-client')
     implementation project(':infra-scheduler')
     implementation project(':infra-runtime')
@@ -23,4 +24,7 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    testImplementation 'com.h2database:h2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

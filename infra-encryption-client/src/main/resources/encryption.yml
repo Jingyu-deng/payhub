@@ -1,0 +1,5 @@
+# Encryption configuration — resolved from intermediate placeholders defined in application.properties.
+# K8s injects ENV_ENCRYPTION_KEY env var; application.properties maps it to env_encryption_key with default.
+payhub:
+  encryption:
+    key: ${env_encryption_key}

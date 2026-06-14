@@ -1,0 +1,11 @@
+# Redis configuration — resolved from intermediate placeholders defined in application.properties.
+# K8s injects ENV_REDIS_* env vars; application.properties maps them to env_redis_* with defaults.
+spring:
+  redis:
+    host: ${env_redis_host}
+    port: ${env_redis_port}
+    password: ${env_redis_password}
+
+payhub:
+  redis:
+    idempotency-ttl-seconds: ${env_redis_idempotency_ttl}

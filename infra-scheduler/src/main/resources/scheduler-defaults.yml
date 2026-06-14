@@ -1,5 +1,8 @@
 spring:
   datasource:
+    url: ${env_datasource_url}
+    username: ${env_datasource_username}
+    password: ${env_datasource_password}
     driver-class-name: org.postgresql.Driver
   quartz:
     job-store-type: jdbc

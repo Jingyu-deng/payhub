@@ -1,5 +1,6 @@
 spring:
   kafka:
+    bootstrap-servers: ${env_kafka_bootstrap_servers}
     consumer:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer

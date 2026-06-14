@@ -36,12 +36,16 @@ public class PaymentEntity {
   private PaymentStatus status;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
+  @Column
   private PaymentGateway paymentGateway;
 
   @Column private String transactionId;
 
   @Column private String gatewayResponse;
+
+  @Column private String notifyUrl;
+
+  @Column private String checkPgStatusControlJobKey;
 
   @Column(updatable = false)
   private Instant createdAt;

@@ -1,1 +1,2 @@
 com.payhub.infra.idempotent.IdempotencyClientImpl
+com.payhub.infra.idempotent.config.RedisConfig

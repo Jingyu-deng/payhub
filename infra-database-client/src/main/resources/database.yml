@@ -1,0 +1,17 @@
+# Database configuration — resolved from intermediate placeholders defined in application.properties.
+# K8s injects ENV_DATASOURCE_* env vars; application.properties maps them to env_datasource_* with defaults.
+# Schema migrations are managed by the infra-flyway module.
+spring:
+  datasource:
+    url: ${env_datasource_url}
+    username: ${env_datasource_username}
+    password: ${env_datasource_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true

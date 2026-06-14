@@ -1,1 +1,2 @@
 com.payhub.infra.database.DatabaseClientImpl
+com.payhub.infra.database.config.DatabaseConfig

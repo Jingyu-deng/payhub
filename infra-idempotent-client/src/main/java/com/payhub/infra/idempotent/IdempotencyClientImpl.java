@@ -1,33 +1,47 @@
 package com.payhub.infra.idempotent;
 
 import com.payhub.core.infra.IdempotencyClient;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * Redis-backed {@link IdempotencyClient} powered by Redisson.
+ *
+ * <p>Idempotency keys are stored as {@code RBucket} entries with a configurable TTL so they
+ * auto-expire. Distributed locks use Redisson {@link RLock} with the same semantics as the port
+ * interface: wait up to {@code waitSeconds} to acquire, hold for at most {@code holdSeconds}.
+ */
 @Component
 public class IdempotencyClientImpl implements IdempotencyClient {
 
-  private final Map<String, Boolean> processed = new ConcurrentHashMap<>();
-  private final Map<String, ReentrantLock> locks = new ConcurrentHashMap<>();
+  private final RedissonClient redissonClient;
+  private final long idempotencyTtlSeconds;
+
+  public IdempotencyClientImpl(
+      RedissonClient redissonClient,
+      @Value("${payhub.redis.idempotency-ttl-seconds:86400}") long idempotencyTtlSeconds) {
+    this.redissonClient = redissonClient;
+    this.idempotencyTtlSeconds = idempotencyTtlSeconds;
+  }
 
   @Override
   public boolean isAlreadyProcessed(String key) {
-    return processed.getOrDefault(key, false);
+    return redissonClient.getBucket(key).get() != null;
   }
 
   @Override
   public void markAsProcessed(String key) {
-    processed.put(key, true);
+    redissonClient.getBucket(key).set(true, idempotencyTtlSeconds, TimeUnit.SECONDS);
   }
 
   @Override
   public boolean acquireLock(String key, long waitSeconds, long holdSeconds) {
-    locks.putIfAbsent(key, new ReentrantLock());
-    ReentrantLock lock = locks.get(key);
+    RLock lock = redissonClient.getLock(key);
     try {
-      return lock.tryLock(waitSeconds, java.util.concurrent.TimeUnit.SECONDS);
+      return lock.tryLock(waitSeconds, holdSeconds, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       return false;
@@ -36,8 +50,8 @@ public class IdempotencyClientImpl implements IdempotencyClient {
 
   @Override
   public void releaseLock(String key) {
-    ReentrantLock lock = locks.get(key);
-    if (lock != null && lock.isHeldByCurrentThread()) {
+    RLock lock = redissonClient.getLock(key);
+    if (lock.isHeldByCurrentThread()) {
       lock.unlock();
     }
   }
