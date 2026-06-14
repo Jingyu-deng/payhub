@@ -2,10 +2,11 @@
 // Depends ONLY on core-entities — never on infra or Spring.
 
 dependencies {
+    // Versions managed by Spring Boot BOM (io.spring.dependency-management)
     implementation project(':core-entities')
-    implementation 'org.slf4j:slf4j-api:2.0.9'
-    compileOnly 'org.projectlombok:lombok:1.18.36'
-    annotationProcessor 'org.projectlombok:lombok:1.18.36'
+    implementation 'org.slf4j:slf4j-api'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 }
 
 // No Spring Boot — plain jar only
