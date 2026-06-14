@@ -10,19 +10,3 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
-# ── K8s health probes ──────────────────────────────────────────
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health
-  endpoint:
-    health:
-      probes:
-        enabled: true
-      show-details: never
-  health:
-    readinessstate:
-      enabled: true
-    livenessstate:
-      enabled: true

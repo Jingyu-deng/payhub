@@ -1,0 +1,19 @@
+// infra-monitor :: Observability infrastructure — custom metrics, health indicators,
+// Micrometer/Prometheus wiring, and OpenTelemetry tracing export.
+
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation project(':infra-common')
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'org.redisson:redisson-spring-boot-starter:3.37.0'
+    implementation 'org.springframework.kafka:spring-kafka'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+bootJar.enabled = false
+jar.enabled = true

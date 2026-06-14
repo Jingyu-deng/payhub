@@ -1,80 +1,98 @@
 {
   "title": "PayHub - Service Overview",
   "uid": "payhub-overview",
-  "version": 1,
+  "version": 2,
   "timezone": "browser",
   "panels": [
     {
-      "title": "Order Service - HTTP Requests (rate)",
+      "title": "HTTP Requests (rate)",
       "type": "graph",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "targets": [
         {
-          "expr": "rate(http_server_requests_seconds_count{application=\"order-service\"}[1m])",
+          "expr": "rate(http_server_requests_seconds_count{application=\"payment-platform\"}[1m])",
           "legendFormat": "{{method}} {{uri}}"
         }
       ]
     },
     {
-      "title": "Payment Service - HTTP Requests (rate)",
+      "title": "HTTP Response Time (P99)",
       "type": "graph",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "rate(http_server_requests_seconds_count{application=\"payment-service\"}[1m])",
-          "legendFormat": "{{method}} {{uri}}"
+          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{application=\"payment-platform\"}[1m]))",
+          "legendFormat": "P99 - {{uri}}"
         }
       ]
     },
     {
-      "title": "Order Service - HTTP Response Time (P99)",
+      "title": "Payment Initiate Rate",
       "type": "graph",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{application=\"order-service\"}[1m]))",
-          "legendFormat": "P99"
+          "expr": "rate(payment_initiate_total{application=\"payment-platform\"}[1m])",
+          "legendFormat": "initiate"
         }
       ]
     },
     {
-      "title": "Payment Service - HTTP Response Time (P99)",
+      "title": "Payment Process Rate (by gateway)",
       "type": "graph",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{application=\"payment-service\"}[1m]))",
+          "expr": "rate(payment_process_total{application=\"payment-platform\"}[1m])",
+          "legendFormat": "{{gateway}}"
+        }
+      ]
+    },
+    {
+      "title": "Payment Error Rate",
+      "type": "graph",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "rate(payment_errors_total{application=\"payment-platform\"}[1m])",
+          "legendFormat": "{{exception}}"
+        }
+      ]
+    },
+    {
+      "title": "Payment Duration (P99)",
+      "type": "graph",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(payment_duration_seconds_bucket{application=\"payment-platform\"}[1m]))",
           "legendFormat": "P99"
         }
       ]
     },
     {
-      "title": "JVM Memory Usage",
+      "title": "JVM Heap Memory",
       "type": "graph",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
       "targets": [
         {
-          "expr": "jvm_memory_used_bytes{application=\"order-service\", area=\"heap\"}",
-          "legendFormat": "Order Service (heap)"
+          "expr": "jvm_memory_used_bytes{application=\"payment-platform\", area=\"heap\"}",
+          "legendFormat": "Heap"
         },
         {
-          "expr": "jvm_memory_used_bytes{application=\"payment-service\", area=\"heap\"}",
-          "legendFormat": "Payment Service (heap)"
+          "expr": "jvm_memory_max_bytes{application=\"payment-platform\", area=\"heap\"}",
+          "legendFormat": "Max Heap"
         }
       ]
     },
     {
-      "title": "Kafka Event Rate (order-events)",
+      "title": "JVM GC Pause Time",
       "type": "graph",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
       "targets": [
         {
-          "expr": "rate(kafka_producer_topic_send_total{application=\"order-service\"}[1m])",
-          "legendFormat": "Producer: {{topic}}"
-        },
-        {
-          "expr": "rate(kafka_consumer_fetch_manager_records_consumed_total{application=\"payment-service\"}[1m])",
-          "legendFormat": "Consumer records"
+          "expr": "rate(jvm_gc_pause_seconds_sum{application=\"payment-platform\"}[1m])",
+          "legendFormat": "{{action}}"
         }
       ]
     }

@@ -1,0 +1,31 @@
+# ── Local development defaults (Docker Compose) ─────────────────
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payhub
+    username: payhub
+    password: payhub123
+  redis:
+    host: localhost
+    port: 6379
+
+payhub:
+  redis:
+    idempotency-ttl-seconds: 86400
+  kafka:
+    consumer:
+      retry:
+        initial-interval-ms: 1000
+        multiplier: 2.0
+        max-interval-ms: 32000
+        max-elapsed-time-ms: 300000
+        not-retryable-exceptions:
+          - com.payhub.infra.message.exception.MissingHeaderException
+          - com.payhub.infra.message.exception.UnknownEventTypeException
+
+logging:
+  level:
+    com.payhub: DEBUG
+    org.apache.kafka: WARN

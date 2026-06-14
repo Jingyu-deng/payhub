@@ -19,12 +19,12 @@ dependencies {
     // infra-flyway NOT included — migrations run standalone via
     // ./gradlew :infra-flyway:migrate, not via Spring Boot auto-config.
     implementation project(':infra-idempotent-client')
+    implementation project(':infra-monitor')
     implementation project(':infra-scheduler')
     implementation project(':infra-runtime')
     implementation project(':infra-common')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     testImplementation 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
